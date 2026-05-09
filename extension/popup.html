@@ -25,7 +25,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", Roboto, sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     width: 100%;
     min-width: 0;
@@ -33,11 +33,11 @@
     overflow-x: hidden;
   }
   .header {
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     background: var(--bg-deep);
     position: sticky;
     top: 0;
@@ -47,15 +47,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
   .header .brand {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
   }
   .header .url {
     color: var(--text-dim);
-    font-size: 10px;
+    font-size: 12px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     white-space: nowrap;
     overflow: hidden;
@@ -68,9 +68,9 @@
     background: var(--accent);
     color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 7px 14px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 13px;
     cursor: pointer;
     font-weight: 600;
     font-family: inherit;
@@ -85,30 +85,30 @@
   .btn-secondary:hover { color: var(--text); }
   body.loading .btn-primary { opacity: 0.5; pointer-events: none; }
 
-  .body { padding: 10px 12px 20px; }
+  .body { padding: 14px 14px 24px; }
 
   .scores {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 16px;
   }
   .score-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 4px;
+    border-radius: 8px;
+    padding: 10px 6px;
     text-align: center;
   }
   .score-card .label {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
   .score-card .value {
-    font-size: 16px;
+    font-size: 22px;
     font-weight: 700;
   }
   .score-card .value.good { color: var(--good); }
@@ -118,16 +118,16 @@
   .tabs {
     display: flex;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 10px;
-    gap: 1px;
+    margin-bottom: 14px;
+    gap: 2px;
     overflow-x: auto;
   }
   .tab {
-    padding: 7px 10px;
+    padding: 10px 16px;
     cursor: pointer;
     color: var(--text-dim);
     font-weight: 600;
-    font-size: 11px;
+    font-size: 13px;
     border-bottom: 2px solid transparent;
     user-select: none;
     white-space: nowrap;
@@ -143,43 +143,44 @@
   .grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 8px;
   }
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 12px 14px;
   }
   .card.good { border-color: rgba(16, 185, 129, 0.4); }
   .card.warn { border-color: rgba(245, 158, 11, 0.4); }
   .card.bad { border-color: rgba(239, 68, 68, 0.4); }
   .card.pending { opacity: 0.5; }
   .card h4 {
-    margin: 0 0 4px;
-    font-size: 12px;
+    margin: 0 0 6px;
+    font-size: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
   }
   .card .status {
-    font-size: 14px;
+    font-size: 16px;
   }
   .card .detail {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text-dim);
     margin: 0;
     word-break: break-word;
   }
   .card .raw {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
-    margin-top: 4px;
+    margin-top: 6px;
     background: var(--bg-deep);
     border-radius: 4px;
-    padding: 4px 6px;
-    max-height: 80px;
+    padding: 6px 8px;
+    max-height: 90px;
     overflow-y: auto;
     word-break: break-all;
   }
@@ -188,19 +189,19 @@
   .tools-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 5px;
+    gap: 6px;
   }
   .tool-link {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 7px 10px;
+    padding: 10px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text);
     text-decoration: none;
-    font-size: 11px;
+    font-size: 13px;
     gap: 8px;
   }
   .tool-link .tool-name {
@@ -214,42 +215,43 @@
   }
   .tool-link .tool-name { font-weight: 600; }
   .tool-link .tool-tag {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--text-muted);
     text-transform: uppercase;
+    white-space: nowrap;
   }
   .tool-link.auto .tool-tag { color: var(--accent); }
 
   .group-title {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
-    margin: 12px 0 6px;
+    margin: 14px 0 6px;
     grid-column: 1 / -1;
   }
 
   /* Keywords panel */
   .kw-section {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
   .kw-section h4 {
-    margin: 0 0 6px;
-    font-size: 12px;
+    margin: 0 0 8px;
+    font-size: 13px;
     color: var(--text);
   }
   .kw-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
   }
   .kw-list .kw {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 4px 10px;
-    font-size: 11px;
+    border-radius: 14px;
+    padding: 6px 12px;
+    font-size: 13px;
     color: var(--text-dim);
     cursor: pointer;
   }
@@ -259,7 +261,7 @@
   }
   .kw-empty {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 13px;
     font-style: italic;
   }
 
@@ -267,14 +269,14 @@
   .domain-row {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 6px 0;
+    gap: 3px;
+    padding: 8px 0;
     border-bottom: 1px dashed var(--border);
-    font-size: 11px;
+    font-size: 13px;
   }
   .domain-row:last-child { border-bottom: none; }
-  .domain-row .key { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
-  .domain-row .val { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+  .domain-row .key { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .domain-row .val { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; font-size: 13px; }
 
   .empty-state {
     text-align: center;
@@ -294,7 +296,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  details > summary { cursor: pointer; font-size: 11px; color: var(--text-dim); padding: 6px 0; }
+  details > summary { cursor: pointer; font-size: 13px; color: var(--text-dim); padding: 8px 0; }
   details > summary:hover { color: var(--text); }
 </style>
 </head>
@@ -302,13 +304,12 @@
 
 <div class="header">
   <div class="header-row1">
-    <span class="brand">📊 웹페이지 분석</span>
+    <div class="url" id="current-url" title="">로딩...</div>
     <div class="actions">
       <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
       <button class="btn btn-primary" id="btn-rerun">재분석</button>
     </div>
   </div>
-  <div class="url" id="current-url" title="">로딩...</div>
 </div>
 
 <div class="body">
