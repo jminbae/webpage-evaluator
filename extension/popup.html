@@ -8,11 +8,11 @@
     --bg: #0b0d12;
     --bg-card: #14171f;
     --bg-deep: #080a0f;
-    --border: #232936;
-    --border-strong: #2d3548;
-    --text: #e5e7eb;
-    --text-dim: #9ca3af;
-    --text-muted: #6b7280;
+    --border: #2a3142;
+    --border-strong: #3a4258;
+    --text: #f3f4f6;
+    --text-dim: #d1d5db;
+    --text-muted: #9ca3af;
     --accent: #60a5fa;
     --good: #10b981;
     --warn: #f59e0b;
@@ -335,6 +335,44 @@
 
   details > summary { cursor: pointer; font-size: 13px; color: var(--text-dim); padding: 8px 0; }
   details > summary:hover { color: var(--text); }
+
+  /* Site analysis page items */
+  .site-page-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    background: var(--bg-card);
+    font-size: 12px;
+  }
+  .site-page-item .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .site-page-item .body { flex: 1; min-width: 0; }
+  .site-page-item .url {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    word-break: break-all;
+    margin-bottom: 2px;
+  }
+  .site-page-item .signals {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .site-page-item .signal {
+    background: var(--bg-deep);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .site-page-item .signal.ok { color: var(--good); }
+  .site-page-item .signal.no { color: var(--text-muted); opacity: 0.6; }
+  .site-page-item.fetching { opacity: 0.6; }
+  .site-page-item.failed { border-color: rgba(239,68,68,0.4); }
 </style>
 </head>
 <body>
@@ -344,6 +382,7 @@
     <div class="url" id="current-url" title="">로딩...</div>
     <div class="actions">
       <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
+      <button class="btn btn-secondary" id="btn-site" title="사이트 전체 샘플 분석">🏠 사이트</button>
       <button class="btn btn-primary" id="btn-rerun">분석</button>
     </div>
   </div>
@@ -362,6 +401,7 @@
 
   <div class="tabs">
     <div class="tab active" data-tab="diag">진단</div>
+    <div class="tab" data-tab="site">🏠 사이트</div>
     <div class="tab" data-tab="tools">외부 도구</div>
     <div class="tab" data-tab="keywords">키워드</div>
     <div class="tab" data-tab="domain">도메인</div>
@@ -387,6 +427,31 @@
       <div class="card pending" id="d-naver"><h4>네이버 SEO 적합성 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
       <div class="card pending" id="d-psi-mobile"><h4>PSI Mobile <span class="status">⏳</span></h4><p class="detail">PSI 키 입력 시</p></div>
       <div class="card pending" id="d-psi-desktop"><h4>PSI Desktop <span class="status">⏳</span></h4><p class="detail">PSI 키 입력 시</p></div>
+    </div>
+  </div>
+
+  <!-- Site tab -->
+  <div class="tab-panel" data-panel="site">
+    <div id="site-empty" style="text-align:center;padding:32px 16px;color:var(--text-muted);font-size:13px;">
+      <div style="font-size:28px;margin-bottom:10px;">🏠</div>
+      <p style="margin:0 0 6px;">상단 <strong>🏠 사이트</strong> 버튼을 누르면 sitemap에서 메인·About·Author·대표 페이지를 자동으로 샘플링해 사이트 차원 신호를 종합합니다.</p>
+      <p style="margin:8px 0 0;font-size:11px;">최대 10개 페이지를 동시 분석. 사이트 크기에 따라 5~20초 소요.</p>
+    </div>
+
+    <div id="site-results" style="display:none;">
+      <h3 style="font-size:14px;margin:0 0 8px;">📊 사이트 차원 종합</h3>
+      <div class="grid">
+        <div class="card pending" id="ds-pages"><h4>분석 페이지 수 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+        <div class="card pending" id="ds-author"><h4>저자 정보 커버리지 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+        <div class="card pending" id="ds-org"><h4>Organization schema <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+        <div class="card pending" id="ds-schema-diversity"><h4>Schema 타입 다양성 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+        <div class="card pending" id="ds-faq-coverage"><h4>FAQ/Q&A 커버리지 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+        <div class="card pending" id="ds-freshness"><h4>콘텐츠 신선도 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+        <div class="card pending" id="ds-knowledge-graph"><h4>외부 신뢰 연결 (sameAs) <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      </div>
+
+      <h3 style="font-size:14px;margin:18px 0 8px;">🔗 분석한 페이지</h3>
+      <div id="site-pages-list" style="font-size:12px;"></div>
     </div>
   </div>
 

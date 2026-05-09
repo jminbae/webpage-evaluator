@@ -61,7 +61,86 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleNaverSuggest(msg.q).then(sendResponse);
     return true;
   }
+  if (msg.action === 'site-analysis') {
+    handleSiteAnalysis(msg.origin).then(sendResponse);
+    return true;
+  }
 });
+
+// ===== Site-wide analysis: pick representative pages and fetch HTML =====
+async function handleSiteAnalysis(origin) {
+  if (!origin) return { ok: false, error: 'no origin' };
+
+  // 1. Fetch sitemap.xml (may be sitemap index too)
+  const sitemapRes = await fetchText(origin + '/sitemap.xml', 8000);
+  let allUrls = [];
+  if (sitemapRes.ok && sitemapRes.text) {
+    const txt = sitemapRes.text;
+    const isIndex = txt.includes('<sitemapindex');
+    if (isIndex) {
+      // Pull first child sitemap and use it
+      const firstChild = txt.match(/<loc>([^<]+)<\/loc>/);
+      if (firstChild) {
+        const childRes = await fetchText(firstChild[1], 8000);
+        if (childRes.ok) {
+          allUrls = [...childRes.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+        }
+      }
+    } else {
+      allUrls = [...txt.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+    }
+  }
+
+  // 2. Build candidate list (deduplicated)
+  const aboutKeywords = ['about', 'team', 'company', 'author', 'profile', 'staff',
+                         'contact', 'history', '소개', '회사', '저자', '의료진', '진료진'];
+  const candidates = [];
+  const seen = new Set();
+  const add = (url) => {
+    if (!url) return;
+    try {
+      const u = new URL(url, origin).href;
+      if (seen.has(u)) return;
+      seen.add(u);
+      candidates.push(u);
+    } catch {}
+  };
+
+  // Always include homepage
+  add(origin + '/');
+
+  // Pick "about-like" pages from sitemap
+  const aboutMatches = allUrls.filter(u => {
+    const lower = u.toLowerCase();
+    return aboutKeywords.some(kw => lower.includes(kw));
+  });
+  aboutMatches.slice(0, 4).forEach(add);
+
+  // Random sample from rest
+  const rest = allUrls.filter(u => !seen.has(u));
+  // Simple shuffle
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+  rest.slice(0, 5).forEach(add);
+
+  // Cap at 10 total
+  const finalList = candidates.slice(0, 10);
+
+  // 3. Fetch all in parallel (with timeout per request)
+  const fetched = await Promise.all(finalList.map(async (url) => {
+    const r = await fetchText(url, 10000);
+    return { url, ok: r.ok, html: r.text || '', error: r.error };
+  }));
+
+  return {
+    ok: true,
+    sitemapFound: sitemapRes.ok && allUrls.length > 0,
+    sitemapUrlCount: allUrls.length,
+    pages: fetched
+  };
+}
 
 async function handleFetchExtras(targetUrl) {
   let origin = '';

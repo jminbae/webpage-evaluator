@@ -87,13 +87,21 @@ function setupTabs() {
 
 function setupActions() {
   document.getElementById('btn-rerun').addEventListener('click', async () => {
-    // Always re-query the active tab when user clicks 분석 (covers the case
-    // where panel was opened on chrome:// page and user switched to a real page)
     const ok = await refreshCurrentTab({ autoAnalyze: false });
     if (ok) runAnalysis();
   });
   document.getElementById('btn-options').addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
+  });
+  document.getElementById('btn-site').addEventListener('click', async () => {
+    const ok = await refreshCurrentTab({ autoAnalyze: false });
+    if (!ok) return;
+    // Switch to site tab
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    document.querySelector('.tab[data-tab="site"]').classList.add('active');
+    document.querySelector('[data-panel="site"]').classList.add('active');
+    runSiteAnalysis();
   });
 }
 
@@ -670,4 +678,226 @@ function extractDomData() {
     eeat: { author, publishedTime, organizationName, sameAsCount },
     rss
   };
+}
+
+// ========== Site-wide analysis ==========
+async function runSiteAnalysis() {
+  if (!currentUrl) return;
+  const origin = new URL(currentUrl).origin;
+
+  document.getElementById('site-empty').style.display = 'none';
+  document.getElementById('site-results').style.display = '';
+
+  // Reset cards
+  ['ds-pages','ds-author','ds-org','ds-schema-diversity','ds-faq-coverage','ds-freshness','ds-knowledge-graph'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('good','warn','bad');
+    el.classList.add('pending');
+    el.querySelector('.status').textContent = '⏳';
+    el.querySelector('.detail').textContent = '분석중...';
+  });
+  document.getElementById('site-pages-list').innerHTML =
+    '<div style="text-align:center;padding:16px;color:var(--text-muted);"><span class="spinner"></span> sitemap에서 페이지 수집 중...</div>';
+
+  // Send to background
+  const result = await new Promise(resolve => {
+    chrome.runtime.sendMessage({ action: 'site-analysis', origin }, resolve);
+  });
+
+  if (!result?.ok) {
+    document.getElementById('site-pages-list').innerHTML =
+      '<div style="color:var(--bad);">사이트 분석 실패: ' + (result?.error || 'unknown') + '</div>';
+    return;
+  }
+
+  // Parse each page
+  const parsed = result.pages.map(p => ({
+    url: p.url,
+    ok: p.ok,
+    error: p.error,
+    data: p.ok ? parseHtmlString(p.html, p.url) : null
+  }));
+
+  renderSitePagesList(parsed);
+  renderSiteAggregate(parsed, result);
+}
+
+function parseHtmlString(html, baseUrl) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // JSON-LD
+    const ldScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+    const types = [];
+    let valid = 0, errors = 0;
+    let organizationName = '';
+    let sameAsCount = 0;
+    ldScripts.forEach(s => {
+      try {
+        const json = JSON.parse(s.textContent);
+        const arr = Array.isArray(json) ? json : (json['@graph'] ? json['@graph'] : [json]);
+        arr.forEach(item => {
+          if (item['@type']) {
+            const t = Array.isArray(item['@type']) ? item['@type'].join(',') : item['@type'];
+            types.push(t);
+            if (/Organization/i.test(t) && item.name) organizationName = item.name;
+          }
+          if (item.sameAs) {
+            const links = Array.isArray(item.sameAs) ? item.sameAs : [item.sameAs];
+            sameAsCount += links.filter(l => typeof l === 'string').length;
+          }
+        });
+        valid++;
+      } catch (e) { errors++; }
+    });
+
+    const title = doc.querySelector('title')?.textContent?.trim() || '';
+    const description = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    const author = !!doc.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"]')
+      || /<[^>]+(class|id)="[^"]*author[^"]*"/i.test(html);
+    const publishedTime = doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content')
+      || doc.querySelector('meta[name="date"]')?.getAttribute('content') || '';
+
+    const lang = doc.documentElement.getAttribute('lang') || '';
+
+    return {
+      title,
+      description,
+      schema: { blocks: ldScripts.length, types: [...new Set(types)], valid, errors },
+      eeat: { author, publishedTime, organizationName, sameAsCount },
+      lang
+    };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+function renderSitePagesList(parsed) {
+  const list = document.getElementById('site-pages-list');
+  list.innerHTML = '';
+  parsed.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'site-page-item' + (p.ok ? '' : ' failed');
+    let signals = '';
+    if (p.data) {
+      const s = p.data;
+      const sig = (label, ok) => `<span class="signal ${ok?'ok':'no'}">${ok?'✓':'·'} ${label}</span>`;
+      signals = `
+        <div class="signals">
+          ${sig('Schema', s.schema.blocks > 0)}
+          ${sig('저자', s.eeat.author)}
+          ${sig('Org', !!s.eeat.organizationName)}
+          ${sig('날짜', !!s.eeat.publishedTime)}
+          ${sig('FAQ', s.schema.types.some(t => /FAQ|Question/i.test(t)))}
+          ${sig('sameAs', s.eeat.sameAsCount > 0)}
+        </div>
+      `;
+    }
+    item.innerHTML = `
+      <span class="icon">${p.ok ? '✓' : '✗'}</span>
+      <div class="body">
+        <div class="url">${p.url.replace(/^https?:\/\//,'')}</div>
+        ${p.data ? `<div style="font-size:11px;color:var(--text);margin-bottom:3px;">${(p.data.title || '').slice(0, 60) || '<em>제목 없음</em>'}</div>` : ''}
+        ${signals || `<div style="font-size:11px;color:var(--text-muted);">${p.error || 'fetch 실패'}</div>`}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function renderSiteAggregate(parsed, result) {
+  const okPages = parsed.filter(p => p.data);
+  const total = okPages.length;
+
+  // Pages count
+  const pageCard = document.getElementById('ds-pages');
+  pageCard.querySelector('.status').textContent = total > 0 ? '✓' : '✗';
+  pageCard.querySelector('.detail').innerHTML =
+    `${total}/${parsed.length}개 성공 · sitemap에서 ${result.sitemapUrlCount}개 URL 발견`;
+  setSiteCardLevel('ds-pages', total >= 5 ? 'good' : (total >= 2 ? 'warn' : 'bad'));
+
+  if (total === 0) return;
+
+  // Author coverage
+  const withAuthor = okPages.filter(p => p.data.eeat.author).length;
+  const authorPct = Math.round((withAuthor / total) * 100);
+  setCard('ds-author',
+    authorPct >= 50 ? '✓' : (authorPct >= 20 ? '△' : '✗'),
+    `${withAuthor}/${total} 페이지에 저자 정보 (${authorPct}%)`,
+    authorPct >= 50 ? 'good' : (authorPct >= 20 ? 'warn' : 'bad'));
+
+  // Organization schema
+  const orgPages = okPages.filter(p => p.data.eeat.organizationName);
+  const orgNames = [...new Set(orgPages.map(p => p.data.eeat.organizationName))];
+  if (orgPages.length > 0) {
+    setCard('ds-org', '✓',
+      `${orgPages.length}개 페이지에서 감지 · ${orgNames.slice(0,2).join(', ')}`,
+      'good');
+  } else {
+    setCard('ds-org', '✗', 'Organization schema 없음 — 사이트 차원 신뢰 신호 부족', 'bad');
+  }
+
+  // Schema diversity
+  const allTypes = new Set();
+  okPages.forEach(p => p.data.schema.types.forEach(t => allTypes.add(t)));
+  setCard('ds-schema-diversity',
+    allTypes.size >= 5 ? '✓' : (allTypes.size >= 2 ? '△' : '✗'),
+    `${allTypes.size}종 타입: ${[...allTypes].slice(0, 6).join(', ')}${allTypes.size>6?'...':''}`,
+    allTypes.size >= 5 ? 'good' : (allTypes.size >= 2 ? 'warn' : 'bad'));
+
+  // FAQ coverage
+  const faqPages = okPages.filter(p => p.data.schema.types.some(t => /FAQ|Question/i.test(t)));
+  if (faqPages.length > 0) {
+    setCard('ds-faq-coverage', '✓',
+      `${faqPages.length}/${total} 페이지에 FAQ/Q&A 스키마 (AEO 강점)`,
+      'good');
+  } else {
+    setCard('ds-faq-coverage', '△',
+      `FAQ/Q&A 스키마 없음 — Q&A 페이지에 추가 권장`,
+      'warn');
+  }
+
+  // Freshness
+  const dates = okPages.map(p => p.data.eeat.publishedTime).filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d));
+  if (dates.length > 0) {
+    dates.sort((a,b) => a-b);
+    const oldest = dates[0];
+    const newest = dates[dates.length-1];
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const daysSinceNewest = Math.round((Date.now() - newest.getTime()) / 86400000);
+    let lvl = 'good';
+    if (daysSinceNewest > 365) lvl = 'bad';
+    else if (daysSinceNewest > 180) lvl = 'warn';
+    setCard('ds-freshness',
+      daysSinceNewest <= 90 ? '✓' : (daysSinceNewest <= 365 ? '△' : '✗'),
+      `최신: ${fmt(newest)} (${daysSinceNewest}일 전) · 가장 오래: ${fmt(oldest)}`,
+      lvl);
+  } else {
+    setCard('ds-freshness', '—', '발행 날짜 메타데이터 없음', 'warn');
+  }
+
+  // Knowledge Graph / external trust (sameAs)
+  const totalSameAs = okPages.reduce((sum, p) => sum + (p.data.eeat.sameAsCount || 0), 0);
+  if (totalSameAs >= 3) {
+    setCard('ds-knowledge-graph', '✓',
+      `sameAs 외부 연결 ${totalSameAs}개 (Wikipedia/SNS 등) — 강한 신뢰 신호`,
+      'good');
+  } else if (totalSameAs > 0) {
+    setCard('ds-knowledge-graph', '△',
+      `sameAs ${totalSameAs}개 — 더 추가 권장`,
+      'warn');
+  } else {
+    setCard('ds-knowledge-graph', '✗',
+      'sameAs 외부 연결 없음 — Wikipedia·SNS·언론 링크 추가 권장',
+      'bad');
+  }
+}
+
+function setSiteCardLevel(id, level) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('good','warn','bad','pending');
+  el.classList.add(level);
 }
