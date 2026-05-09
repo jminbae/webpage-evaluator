@@ -27,46 +27,54 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", Roboto, sans-serif;
     font-size: 13px;
     line-height: 1.5;
-    width: 720px;
-    min-height: 600px;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
   .header {
-    padding: 14px 18px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 6px;
     background: var(--bg-deep);
     position: sticky;
     top: 0;
     z-index: 5;
   }
+  .header-row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
   .header .brand {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
   }
   .header .url {
-    flex: 1;
     color: var(--text-dim);
-    font-size: 11px;
+    font-size: 10px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin: 0 12px;
+    flex: 1;
+    min-width: 0;
   }
   .header .actions { display: flex; gap: 6px; }
   .btn {
     background: var(--accent);
     color: white;
     border: none;
-    padding: 6px 12px;
+    padding: 5px 10px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     font-weight: 600;
     font-family: inherit;
+    white-space: nowrap;
   }
   .btn:hover { opacity: 0.9; }
   .btn-secondary {
@@ -77,19 +85,19 @@
   .btn-secondary:hover { color: var(--text); }
   body.loading .btn-primary { opacity: 0.5; pointer-events: none; }
 
-  .body { padding: 14px 18px 24px; }
+  .body { padding: 10px 12px 20px; }
 
   .scores {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    margin-bottom: 12px;
   }
   .score-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 6px;
+    border-radius: 6px;
+    padding: 6px 4px;
     text-align: center;
   }
   .score-card .label {
@@ -100,7 +108,7 @@
     margin-bottom: 2px;
   }
   .score-card .value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
   }
   .score-card .value.good { color: var(--good); }
@@ -110,17 +118,19 @@
   .tabs {
     display: flex;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 12px;
-    gap: 2px;
+    margin-bottom: 10px;
+    gap: 1px;
+    overflow-x: auto;
   }
   .tab {
-    padding: 8px 14px;
+    padding: 7px 10px;
     cursor: pointer;
     color: var(--text-dim);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px;
     border-bottom: 2px solid transparent;
     user-select: none;
+    white-space: nowrap;
   }
   .tab:hover { color: var(--text); }
   .tab.active {
@@ -132,14 +142,14 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
   .card.good { border-color: rgba(16, 185, 129, 0.4); }
   .card.warn { border-color: rgba(245, 158, 11, 0.4); }
@@ -177,20 +187,26 @@
   /* Tools panel */
   .tools-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
+    grid-template-columns: 1fr;
+    gap: 5px;
   }
   .tool-link {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 10px;
+    padding: 7px 10px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text);
     text-decoration: none;
     font-size: 11px;
+    gap: 8px;
+  }
+  .tool-link .tool-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .tool-link:hover {
     background: var(--bg-deep);
@@ -250,14 +266,15 @@
   /* Domain panel */
   .domain-row {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 2px;
     padding: 6px 0;
     border-bottom: 1px dashed var(--border);
-    font-size: 12px;
+    font-size: 11px;
   }
   .domain-row:last-child { border-bottom: none; }
-  .domain-row .key { color: var(--text-dim); }
-  .domain-row .val { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .domain-row .key { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .domain-row .val { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
 
   .empty-state {
     text-align: center;
@@ -284,12 +301,14 @@
 <body>
 
 <div class="header">
-  <span class="brand">웹페이지 분석</span>
-  <span class="url" id="current-url">로딩...</span>
-  <div class="actions">
-    <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
-    <button class="btn btn-primary" id="btn-rerun">재분석</button>
+  <div class="header-row1">
+    <span class="brand">📊 웹페이지 분석</span>
+    <div class="actions">
+      <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
+      <button class="btn btn-primary" id="btn-rerun">재분석</button>
+    </div>
   </div>
+  <div class="url" id="current-url" title="">로딩...</div>
 </div>
 
 <div class="body">

@@ -1,18 +1,20 @@
 {
   "manifest_version": 3,
   "name": "웹페이지 분석 도구",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "현재 페이지의 SEO·Schema·AEO/GEO·Performance·Accessibility를 즉시 점검 (LLM 없이 결정적 metric only).",
-  "permissions": ["activeTab", "storage", "scripting", "tabs"],
+  "permissions": ["activeTab", "storage", "scripting", "tabs", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "웹페이지 분석 도구",
+    "default_title": "웹페이지 분석 도구 — 사이드 패널 열기",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "popup.html"
   },
   "options_page": "options.html",
   "background": {

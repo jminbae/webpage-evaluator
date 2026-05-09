@@ -3,8 +3,14 @@
  * - Fetch robots.txt, llms.txt, sitemap.xml, Wayback
  * - Call PageSpeed Insights API
  * - Call Google Suggest, Naver autocomplete
+ * - Open side panel on action click
  * Extension has host_permissions: <all_urls>, so no CORS issues
  * =========================================================== */
+
+// Open side panel when extension icon clicked
+chrome.sidePanel
+  .setPanelBehavior({ openPanelOnActionClick: true })
+  .catch((err) => console.error('sidePanel setup failed:', err));
 
 const AI_BOTS = [
   'GPTBot', 'ClaudeBot', 'anthropic-ai', 'PerplexityBot',
