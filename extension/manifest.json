@@ -3,7 +3,6 @@
   "name": "웹페이지 분석 도구",
   "version": "0.1.0",
   "description": "현재 페이지의 SEO·Schema·AEO/GEO·Performance·Accessibility를 즉시 점검 (LLM 없이 결정적 metric only).",
-  "default_locale": "ko",
   "permissions": ["activeTab", "storage", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],
   "action": {
