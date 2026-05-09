@@ -384,6 +384,7 @@
       <span class="brand-sub">Site Evaluation Toolkit</span>
     </div>
     <nav class="top-nav">
+      <a href="#extension" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white !important;font-weight:600;">🧩 크롬 확장</a>
       <a href="#diagnostics">즉시 분석</a>
       <a href="#schema">Schema</a>
       <a href="#seo">SEO</a>
@@ -399,6 +400,50 @@
 <section class="hero">
   <h1>웹페이지 분석 도구 카탈로그</h1>
   <p>한 번의 URL 입력 → 모든 외부 도구로 자동 전달 + 즉시 자동 점검. <strong>LLM 없이 결정적 metric만</strong> 출력. 무료(또는 freemium 핵심 기능 무료) 도구만 모았어요.</p>
+</section>
+
+<!-- Chrome Extension promo -->
+<section id="extension" style="background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.12));border:1px solid rgba(99,102,241,0.4);border-radius:16px;padding:28px;margin-bottom:32px;">
+  <h2 style="margin-top:0;font-size:22px;display:flex;align-items:center;gap:10px;">
+    🧩 크롬 확장 <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;letter-spacing:0.05em;">NEW · 더 강력</span>
+  </h2>
+  <p style="color:var(--text-dim);margin:0 0 14px;">
+    웹 버전의 한계(CORS 프록시 의존, JS 렌더링 전 HTML만 분석)를 해결한 <strong>크롬 확장 버전</strong>. 현재 보고 있는 페이지에서 아이콘 클릭 한 번으로 즉시 분석.
+  </p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">✓ CORS 우회</div>
+      <div style="font-size:13px;color:var(--text-dim);">공용 프록시 불필요. 어떤 사이트든 직접 fetch.</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">✓ 렌더링 후 DOM</div>
+      <div style="font-size:13px;color:var(--text-dim);">JS 실행 후 실제 DOM 분석 (SPA·CSR 사이트도 정확).</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">✓ URL 입력 불필요</div>
+      <div style="font-size:13px;color:var(--text-dim);">현재 탭 자동 인식. 아이콘 클릭만.</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">+ 키워드 제안</div>
+      <div style="font-size:13px;color:var(--text-dim);">Google Suggest + Naver 자동완성 + Wayback 아카이브.</div>
+    </div>
+  </div>
+  <details style="background:var(--bg-deep);border:1px solid var(--border);border-radius:8px;padding:14px 18px;">
+    <summary style="cursor:pointer;font-weight:600;color:var(--text);">📦 설치 방법 (개발자 모드 sideload, 무료)</summary>
+    <ol style="color:var(--text-dim);font-size:13px;line-height:1.8;margin:12px 0 0;padding-left:20px;">
+      <li>이 GitHub 레포에서 <code>extension/</code> 폴더를 다운로드 (또는 전체 ZIP 다운로드 후 압축 해제)<br>
+        <a href="https://github.com/jminbae/webpage-evaluator" target="_blank" rel="noopener" style="color:var(--accent);">→ GitHub 레포 열기</a></li>
+      <li>Chrome 주소창에 <code>chrome://extensions/</code> 입력</li>
+      <li>우상단 <strong>"개발자 모드"</strong> ON</li>
+      <li><strong>"압축해제된 확장 프로그램을 로드합니다"</strong> 클릭</li>
+      <li><code>extension/</code> 폴더 선택</li>
+      <li>도구모음의 퍼즐 아이콘 → "웹페이지 분석 도구" 핀 고정 권장</li>
+      <li>(선택) 확장 옵션에서 <a href="https://developers.google.com/speed/docs/insights/v5/get-started" target="_blank" rel="noopener" style="color:var(--accent);">PageSpeed Insights API 키</a> 입력 → Core Web Vitals 자동 측정</li>
+    </ol>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">
+      ⚠ Chrome Web Store 게시 전이라 sideload만 가능합니다 (개발자 등록 $5 결제 후 게시 예정). 이 방식은 무료고 안전합니다.
+    </p>
+  </details>
 </section>
 
 <!-- URL Bar -->

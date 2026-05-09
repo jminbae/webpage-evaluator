@@ -1,64 +1,118 @@
 # 웹페이지 분석 도구 (Site Evaluation Toolkit)
 
-블로그·웹사이트·웹앱을 평가하기 위한 무료 도구를 한 페이지에 카테고리별로 정리한 카탈로그.
+블로그·웹사이트·웹앱을 평가하기 위한 무료 도구를 한 페이지에 카테고리별로 정리한 카탈로그 + **즉시 자동 분석** + **크롬 확장**.
 
-## 미리보기
+> **LLM API 사용 안함** · 결정적 metric only · GitHub Pages 배포
 
-`index.html`을 브라우저로 열거나 GitHub Pages로 배포하면 바로 사용 가능합니다.
+## 두 가지 사용 방법
 
-## 카테고리
+### 1. 웹 버전 (GitHub Pages)
+URL을 입력하면 모든 외부 도구 링크가 자동으로 그 URL을 전달하도록 갱신되고, 즉시 자동 분석도 수행.
 
-1. 🏗️ 구조화 데이터(Schema) 검증
-2. 🔍 SEO 기본 (검색엔진 등록·관리)
-3. ⚡ 페이지 속도·Core Web Vitals
-4. 🤖 AEO·GEO (AI 검색 가시성)
-5. 📊 도메인 점수·백링크
-6. 🏪 로컬·비즈니스 노출
-7. 📈 트렌드·키워드 리서치
-8. 👁️ 사용자 행동 분석
-9. ♿ 접근성·기술 SEO
-10. 📝 AEO 필수 파일 (robots.txt, llms.txt)
+🔗 **https://jminbae.github.io/webpage-evaluator/**
 
-## 종합 분석 도구 (개발 예정)
+### 2. 크롬 확장 (권장)
+웹 버전의 한계(CORS 프록시 의존, JS 렌더링 전 HTML만 분석)를 해결.
 
-URL 한 개를 입력하면 위 도구들의 핵심 점검을 자동으로 돌리고 Claude가 자연어 보고서를 작성하는 별도 웹앱.
+#### 설치
 
-### 기술 스택 (안)
+```bash
+# 1. 레포 클론 또는 ZIP 다운로드
+git clone https://github.com/jminbae/webpage-evaluator.git
 
-```
-analyzer/
-├── frontend/        Next.js + Tailwind (Vercel 무료 호스팅)
-├── api/             Vercel Serverless Functions
-│   ├── psi          Google PageSpeed Insights API (무료)
-│   ├── schema       JSON-LD 추출 및 검증
-│   ├── robots       robots.txt → AI 크롤러 점검
-│   ├── llms         llms.txt 존재 + 형식 검증
-│   ├── meta         OG/Twitter Card/canonical/viewport
-│   └── claude       Claude API 종합 보고서 생성
-└── README.md
+# 2. Chrome → chrome://extensions/
+# 3. "개발자 모드" ON
+# 4. "압축해제된 확장 프로그램을 로드합니다" → extension/ 폴더 선택
 ```
 
-### 자동 점검 항목
+#### 기능
 
-- Google PageSpeed Insights API → Core Web Vitals
-- HTML 파싱 → JSON-LD/meta/OG 추출
-- robots.txt → GPTBot, ClaudeBot, PerplexityBot, Google-Extended 허용 여부
-- llms.txt 존재 및 형식
-- 이미지 alt·크기, 모바일 viewport, canonical, hreflang
-- Schema 타입별 필수 필드 (LocalBusiness/Person/Article 등)
-- 한국 SEO 가이드 체크리스트 (네이버)
-- Claude API 종합 진단 리포트
+- **현재 탭 자동 인식** (URL 입력 불필요)
+- **렌더링된 DOM 분석** (SPA·CSR 사이트도 정확)
+- **CORS 우회** (host_permissions: `<all_urls>`)
+- **17개 진단 카드 + 5개 카테고리 점수**
+- **23개 외부 도구 자동 URL 전달** (Rich Results, Schema.org, PSI, WAVE, Wayback 등)
+- **키워드 제안**: Google Suggest, Naver 자동완성, 페이지 H1·title 추출
+- **도메인 정보**: Wayback 첫 스냅샷·총 스냅샷 수
+- **(선택) PageSpeed Insights API**: Mobile/Desktop CWV 자동
 
-### BYOK (Bring Your Own Key)
+## 기능 비교
 
-사용자가 직접 Claude API 키와 Google PSI 키를 입력하는 방식으로 비용 0원 운영.
+| 항목 | 웹 버전 | 크롬 확장 |
+|---|---|---|
+| CORS 우회 | 공용 프록시 의존 (가끔 다운) | ❌ 없음 — 직접 fetch |
+| DOM 분석 | 서버 사이드 HTML만 | ✅ 렌더링 후 DOM |
+| URL 입력 | 매번 필요 | ✅ 현재 탭 자동 |
+| 외부 도구 자동 전달 | ✅ | ✅ |
+| 진단 카드 | 16개 | 17개 (+ E-E-A-T) |
+| 키워드 제안 | ❌ | ✅ Google + Naver |
+| 도메인 아카이브 정보 | ❌ | ✅ Wayback |
+| 다중 페이지 분석 | ❌ | 가능 (개발 예정) |
 
-## 배포 (GitHub Pages)
+## 카테고리 (외부 도구)
 
-1. GitHub 새 레포 생성 (예: `site-evaluation-toolkit`)
-2. 이 폴더의 파일을 push
-3. Settings → Pages → Source: `main` branch / `/ (root)` → Save
-4. `https://{username}.github.io/site-evaluation-toolkit/` 접속
+1. 🏗️ 구조화 데이터(Schema) 검증 — Rich Results, Schema.org, Classy
+2. 🔍 SEO 기본 — GSC, Naver Search Advisor, Bing Webmaster
+3. ⚡ 속도·CWV — PageSpeed Insights, Lighthouse
+4. 🤖 AEO·GEO — AI Rank Lab, Geoptie, OtterlyAI, Chrome 확장
+5. 📊 도메인 점수 — Ubersuggest, Moz, Ahrefs Webmaster, SimilarWeb
+6. 🏪 로컬·비즈니스 — Google Business Profile, Naver 스마트플레이스
+7. 📈 트렌드·키워드 — Google Trends, Naver DataLab
+8. 👁️ 사용자 행동 — Microsoft Clarity, GA4
+9. ♿ 접근성·기술 SEO — WAVE, Screaming Frog, This vs That
+10. 📝 AEO 필수 파일 — robots.txt, llms.txt
+
+## 자동 점검 항목 (LLM 없이)
+
+### HTML 분석 (DOM 직접 파싱)
+- JSON-LD 스키마 (블록 수, 타입, parse error)
+- Title, description (길이 검증)
+- OG 태그 (5개), Twitter Card (4개)
+- Canonical, Hreflang
+- Mobile viewport
+- Heading 계층 (H1~H3)
+- Image alt 누락, lazy loading
+- Internal/external links
+- FAQ/Q&A 스키마
+- E-E-A-T 신호 (저자, 발행일, 조직, sameAs)
+- 한국 SEO (RSS, lang, OG)
+
+### 외부 fetch
+- `/robots.txt` → 12개 AI 봇 차단 여부 (GPTBot, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended, CCBot, cohere-ai, Bytespider, Applebot-Extended, Diffbot, omgili, meta-externalagent)
+- `/llms.txt` → 존재, 크기, H1 형식
+- `/sitemap.xml` → URL 수
+- Wayback Machine → 첫 스냅샷, 총 스냅샷 수
+- (옵션) PageSpeed Insights API → Mobile/Desktop CWV
+
+### 키워드 (Ubersuggest 일부 대체)
+- 페이지 title·H1에서 시드 키워드 추출
+- Google Suggest API (영문)
+- Naver 자동완성 API (한국어)
+- 질문 패턴 추출 (AEO 핵심)
+
+## 점수 시스템
+
+5개 카테고리 + 종합 점수 (모두 0~100):
+- **Schema** — JSON-LD 완성도
+- **Meta** — title/description/OG/canonical/viewport/heading/sitemap
+- **AEO** — robots AI 봇, llms.txt, FAQ, E-E-A-T
+- **Perf** — PSI Performance (PSI 키 입력 시)
+- **A11y** — alt 텍스트, ARIA, semantic
+
+## 프라이버시
+
+- LLM API 사용 안함 (모든 분석은 결정적 로직)
+- 외부 서버로 사용자 데이터 전송 없음
+- PSI 키는 `chrome.storage.sync`에만 저장
+- 호출하는 공개 API: Google PSI · Google Suggest · Naver 자동완성 · Wayback · 분석 대상 사이트의 robots/llms/sitemap
+
+## 한계 (서드파티 독점 데이터)
+
+다음은 외부에서 복제 불가능 (각 도구 직접 사용):
+- Domain Authority (Moz), Domain Rating (Ahrefs) — 자체 인덱스
+- 정확한 백링크 목록 — 자체 크롤링
+- 키워드 검색량 — 자체 데이터
+- GSC/Naver Advisor 데이터 — 본인 인증 필요
 
 ## 라이선스
 

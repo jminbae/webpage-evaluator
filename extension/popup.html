@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>웹페이지 분석 도구</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-card: #14171f;
+    --bg-deep: #080a0f;
+    --border: #232936;
+    --border-strong: #2d3548;
+    --text: #e5e7eb;
+    --text-dim: #9ca3af;
+    --text-muted: #6b7280;
+    --accent: #60a5fa;
+    --good: #10b981;
+    --warn: #f59e0b;
+    --bad: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    width: 720px;
+    min-height: 600px;
+  }
+  .header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-deep);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .header .brand {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .header .url {
+    flex: 1;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 12px;
+  }
+  .header .actions { display: flex; gap: 6px; }
+  .btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { color: var(--text); }
+  body.loading .btn-primary { opacity: 0.5; pointer-events: none; }
+
+  .body { padding: 14px 18px 24px; }
+
+  .scores {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .score-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .score-card .label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .score-card .value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .score-card .value.good { color: var(--good); }
+  .score-card .value.warn { color: var(--warn); }
+  .score-card .value.bad { color: var(--bad); }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    gap: 2px;
+  }
+  .tab {
+    padding: 8px 14px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 2px solid transparent;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .card.good { border-color: rgba(16, 185, 129, 0.4); }
+  .card.warn { border-color: rgba(245, 158, 11, 0.4); }
+  .card.bad { border-color: rgba(239, 68, 68, 0.4); }
+  .card.pending { opacity: 0.5; }
+  .card h4 {
+    margin: 0 0 4px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card .status {
+    font-size: 14px;
+  }
+  .card .detail {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin: 0;
+    word-break: break-word;
+  }
+  .card .raw {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    background: var(--bg-deep);
+    border-radius: 4px;
+    padding: 4px 6px;
+    max-height: 80px;
+    overflow-y: auto;
+    word-break: break-all;
+  }
+
+  /* Tools panel */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .tool-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 11px;
+  }
+  .tool-link:hover {
+    background: var(--bg-deep);
+    border-color: var(--accent);
+  }
+  .tool-link .tool-name { font-weight: 600; }
+  .tool-link .tool-tag {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .tool-link.auto .tool-tag { color: var(--accent); }
+
+  .group-title {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin: 12px 0 6px;
+    grid-column: 1 / -1;
+  }
+
+  /* Keywords panel */
+  .kw-section {
+    margin-bottom: 14px;
+  }
+  .kw-section h4 {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .kw-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .kw-list .kw {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .kw-list .kw:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .kw-empty {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-style: italic;
+  }
+
+  /* Domain panel */
+  .domain-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 12px;
+  }
+  .domain-row:last-child { border-bottom: none; }
+  .domain-row .key { color: var(--text-dim); }
+  .domain-row .val { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  details > summary { cursor: pointer; font-size: 11px; color: var(--text-dim); padding: 6px 0; }
+  details > summary:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="brand">웹페이지 분석</span>
+  <span class="url" id="current-url">로딩...</span>
+  <div class="actions">
+    <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
+    <button class="btn btn-primary" id="btn-rerun">재분석</button>
+  </div>
+</div>
+
+<div class="body">
+
+  <div class="scores" id="scores">
+    <div class="score-card"><div class="label">종합</div><div class="value" id="s-total">—</div></div>
+    <div class="score-card"><div class="label">Schema</div><div class="value" id="s-schema">—</div></div>
+    <div class="score-card"><div class="label">Meta</div><div class="value" id="s-meta">—</div></div>
+    <div class="score-card"><div class="label">AEO</div><div class="value" id="s-aeo">—</div></div>
+    <div class="score-card"><div class="label">Perf</div><div class="value" id="s-perf">—</div></div>
+    <div class="score-card"><div class="label">A11y</div><div class="value" id="s-a11y">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="diag">진단</div>
+    <div class="tab" data-tab="tools">외부 도구</div>
+    <div class="tab" data-tab="keywords">키워드</div>
+    <div class="tab" data-tab="domain">도메인</div>
+  </div>
+
+  <!-- Diagnostics tab -->
+  <div class="tab-panel active" data-panel="diag">
+    <div class="grid" id="diag-grid">
+      <div class="card pending" id="d-html"><h4>HTML <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-schema"><h4>Schema (JSON-LD) <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-meta"><h4>Meta·OG·Twitter <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-canonical"><h4>Canonical·Hreflang <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-mobile"><h4>모바일 viewport <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-headings"><h4>헤딩 계층 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-images"><h4>이미지 alt·lazy <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-links"><h4>내부·외부 링크 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-robots"><h4>robots.txt — AI 봇 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-llms"><h4>llms.txt <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-sitemap"><h4>sitemap.xml <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-faq"><h4>FAQ·Q&amp;A 구조 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-https"><h4>HTTPS·보안 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-eeat"><h4>E-E-A-T 신호 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-naver"><h4>네이버 SEO 적합성 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
+      <div class="card pending" id="d-psi-mobile"><h4>PSI Mobile <span class="status">⏳</span></h4><p class="detail">PSI 키 입력 시</p></div>
+      <div class="card pending" id="d-psi-desktop"><h4>PSI Desktop <span class="status">⏳</span></h4><p class="detail">PSI 키 입력 시</p></div>
+    </div>
+  </div>
+
+  <!-- Tools tab -->
+  <div class="tab-panel" data-panel="tools">
+    <div class="tools-grid" id="tools-grid">
+      <div class="group-title">🏗 Schema</div>
+      <a class="tool-link auto" target="_blank" data-pat="https://search.google.com/test/rich-results?url={URL_E}"><span class="tool-name">Google Rich Results Test</span><span class="tool-tag">URL 자동</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="https://validator.schema.org/#url={URL_E}"><span class="tool-name">Schema.org Validator</span><span class="tool-tag">URL 자동</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="https://classyschema.org/Visualisation?url={URL_E}"><span class="tool-name">Classy Schema Viewer</span><span class="tool-tag">URL 자동</span></a>
+
+      <div class="group-title">⚡ 속도</div>
+      <a class="tool-link auto" target="_blank" data-pat="https://pagespeed.web.dev/analysis?url={URL_E}&form_factor=mobile"><span class="tool-name">PageSpeed Mobile</span><span class="tool-tag">URL 자동</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="https://pagespeed.web.dev/analysis?url={URL_E}&form_factor=desktop"><span class="tool-name">PageSpeed Desktop</span><span class="tool-tag">URL 자동</span></a>
+
+      <div class="group-title">🔍 SEO 등록·관리</div>
+      <a class="tool-link" target="_blank" data-pat="https://search.google.com/search-console"><span class="tool-name">Google Search Console</span><span class="tool-tag">로그인</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://searchadvisor.naver.com/"><span class="tool-name">Naver Search Advisor</span><span class="tool-tag">로그인</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://www.bing.com/webmasters"><span class="tool-name">Bing Webmaster</span><span class="tool-tag">로그인</span></a>
+
+      <div class="group-title">🤖 AEO/GEO</div>
+      <a class="tool-link auto" target="_blank" data-pat="https://www.airanklab.com/?url={URL_E}"><span class="tool-name">AI Rank Lab</span><span class="tool-tag">freemium</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="https://geoptie.com/free-geo-audit?url={URL_E}"><span class="tool-name">Geoptie GEO 감사</span><span class="tool-tag">무료</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://otterly.ai/geo-tools"><span class="tool-name">OtterlyAI</span><span class="tool-tag">freemium</span></a>
+
+      <div class="group-title">📊 도메인 점수·백링크</div>
+      <a class="tool-link auto" target="_blank" data-pat="https://app.neilpatel.com/en/traffic_analyzer/overview?domain={ORIGIN}"><span class="tool-name">Ubersuggest</span><span class="tool-tag">freemium</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="https://moz.com/domain-analysis?site={ORIGIN}"><span class="tool-name">Moz Link Explorer</span><span class="tool-tag">freemium</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://ahrefs.com/webmaster-tools"><span class="tool-name">Ahrefs Webmaster</span><span class="tool-tag">본인 사이트</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="https://www.similarweb.com/website/{HOST}/"><span class="tool-name">SimilarWeb</span><span class="tool-tag">URL 자동</span></a>
+
+      <div class="group-title">🏪 로컬·비즈니스</div>
+      <a class="tool-link" target="_blank" data-pat="https://www.google.com/business/"><span class="tool-name">Google Business Profile</span><span class="tool-tag">로그인</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://smartplace.naver.com/"><span class="tool-name">Naver 스마트플레이스</span><span class="tool-tag">로그인</span></a>
+
+      <div class="group-title">📈 트렌드</div>
+      <a class="tool-link" target="_blank" data-pat="https://trends.google.com/trends/explore?q={KEYWORD}"><span class="tool-name">Google Trends</span><span class="tool-tag">키워드 자동</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://datalab.naver.com/keyword/trendSearch.naver"><span class="tool-name">Naver DataLab</span><span class="tool-tag">키워드</span></a>
+
+      <div class="group-title">👁️ 행동 분석</div>
+      <a class="tool-link" target="_blank" data-pat="https://clarity.microsoft.com/"><span class="tool-name">Microsoft Clarity</span><span class="tool-tag">설치 필요</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://analytics.google.com/"><span class="tool-name">Google Analytics</span><span class="tool-tag">설치 필요</span></a>
+
+      <div class="group-title">♿ 접근성</div>
+      <a class="tool-link auto" target="_blank" data-pat="https://wave.webaim.org/report#/{URL_R}"><span class="tool-name">WAVE Accessibility</span><span class="tool-tag">URL 자동</span></a>
+      <a class="tool-link" target="_blank" data-pat="https://www.screamingfrog.co.uk/seo-spider/"><span class="tool-name">Screaming Frog</span><span class="tool-tag">데스크탑</span></a>
+
+      <div class="group-title">📝 AEO 파일</div>
+      <a class="tool-link auto" target="_blank" data-pat="{ORIGIN}/robots.txt"><span class="tool-name">robots.txt 직접 보기</span><span class="tool-tag">URL 자동</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="{ORIGIN}/llms.txt"><span class="tool-name">llms.txt 직접 보기</span><span class="tool-tag">URL 자동</span></a>
+      <a class="tool-link auto" target="_blank" data-pat="{ORIGIN}/sitemap.xml"><span class="tool-name">sitemap.xml 직접 보기</span><span class="tool-tag">URL 자동</span></a>
+
+      <div class="group-title">📚 아카이브</div>
+      <a class="tool-link auto" target="_blank" data-pat="https://web.archive.org/web/*/{URL_R}"><span class="tool-name">Wayback Machine</span><span class="tool-tag">URL 자동</span></a>
+    </div>
+  </div>
+
+  <!-- Keywords tab -->
+  <div class="tab-panel" data-panel="keywords">
+    <div class="kw-section">
+      <h4>📍 페이지 키워드 (제목·H1 추출)</h4>
+      <div class="kw-list" id="kw-extracted"><span class="kw-empty">분석 후 표시</span></div>
+    </div>
+    <div class="kw-section">
+      <h4>🔍 Google 자동완성 (영문 추세)</h4>
+      <div class="kw-list" id="kw-google"><span class="kw-empty">분석 후 표시</span></div>
+    </div>
+    <div class="kw-section">
+      <h4>🇰🇷 Naver 자동완성 (한국어)</h4>
+      <div class="kw-list" id="kw-naver"><span class="kw-empty">분석 후 표시</span></div>
+    </div>
+    <div class="kw-section">
+      <h4>❓ 질문형 키워드 (AEO 핵심 — "어떻게/왜/언제")</h4>
+      <div class="kw-list" id="kw-questions"><span class="kw-empty">분석 후 표시</span></div>
+    </div>
+    <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">
+      💡 키워드 클릭 → Google Trends 새 탭. 검색량/경쟁도는 자체 도메인 데이터라 직접 조회 불가 — Ahrefs Webmaster(본인 사이트 무료)나 Naver Search Advisor에서 확인.
+    </p>
+  </div>
+
+  <!-- Domain tab -->
+  <div class="tab-panel" data-panel="domain">
+    <div id="domain-info">
+      <div class="domain-row"><span class="key">도메인</span><span class="val" id="dom-host">—</span></div>
+      <div class="domain-row"><span class="key">프로토콜</span><span class="val" id="dom-protocol">—</span></div>
+      <div class="domain-row"><span class="key">Wayback 첫 스냅샷</span><span class="val" id="dom-wayback-first">—</span></div>
+      <div class="domain-row"><span class="key">Wayback 스냅샷 수</span><span class="val" id="dom-wayback-count">—</span></div>
+      <div class="domain-row"><span class="key">robots.txt 크기</span><span class="val" id="dom-robots-size">—</span></div>
+      <div class="domain-row"><span class="key">차단된 AI 봇</span><span class="val" id="dom-blocked-bots">—</span></div>
+      <div class="domain-row"><span class="key">llms.txt</span><span class="val" id="dom-llms">—</span></div>
+      <div class="domain-row"><span class="key">sitemap URL 수</span><span class="val" id="dom-sitemap-count">—</span></div>
+      <div class="domain-row"><span class="key">JSON-LD 블록 수</span><span class="val" id="dom-schema-count">—</span></div>
+      <div class="domain-row"><span class="key">Schema 타입</span><span class="val" id="dom-schema-types">—</span></div>
+      <div class="domain-row"><span class="key">언어 (html lang)</span><span class="val" id="dom-lang">—</span></div>
+      <div class="domain-row"><span class="key">RSS 링크</span><span class="val" id="dom-rss">—</span></div>
+      <div class="domain-row"><span class="key">canonical</span><span class="val" id="dom-canonical">—</span></div>
+      <div class="domain-row"><span class="key">hreflang 수</span><span class="val" id="dom-hreflang">—</span></div>
+      <div class="domain-row"><span class="key">이미지 / alt 누락</span><span class="val" id="dom-images">—</span></div>
+      <div class="domain-row"><span class="key">전체 링크 (내부/외부)</span><span class="val" id="dom-links">—</span></div>
+    </div>
+    <details style="margin-top:12px;">
+      <summary>🔍 raw 데이터 (디버그)</summary>
+      <pre id="raw-data" style="font-size:10px;color:var(--text-muted);background:var(--bg-deep);padding:10px;border-radius:6px;max-height:200px;overflow:auto;"></pre>
+    </details>
+  </div>
+
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

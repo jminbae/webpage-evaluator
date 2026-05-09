@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>설정 — 웹페이지 분석 도구</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", Roboto, sans-serif;
+    background: #0b0d12;
+    color: #e5e7eb;
+    margin: 0;
+    padding: 40px 24px;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 20px; letter-spacing: -0.01em; }
+  .section { background: #14171f; border: 1px solid #232936; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .section h2 { margin: 0 0 12px; font-size: 16px; }
+  .section p { color: #9ca3af; font-size: 13px; margin: 0 0 12px; }
+  label { display: block; margin-bottom: 6px; font-size: 13px; color: #9ca3af; }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: #0b0d12;
+    border: 1px solid #232936;
+    color: #e5e7eb;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  input:focus { outline: none; border-color: #60a5fa; }
+  button {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 12px;
+  }
+  button:hover { opacity: 0.9; }
+  .status { font-size: 12px; color: #10b981; margin-top: 8px; min-height: 18px; }
+  a { color: #60a5fa; }
+  .help { font-size: 12px; color: #6b7280; margin-top: 8px; }
+  code { background: #0b0d12; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚙️ 웹페이지 분석 도구 — 설정</h1>
+
+  <div class="section">
+    <h2>🔑 PageSpeed Insights API 키</h2>
+    <p>Google PSI API 키를 입력하면 Core Web Vitals(LCP/CLS/INP) 자동 측정. 키 없이도 다른 모든 점검은 작동.</p>
+    <label for="psi-key">PSI API 키</label>
+    <input type="text" id="psi-key" placeholder="AIzaSy...">
+    <button id="save">저장</button>
+    <div class="status" id="status"></div>
+    <p class="help">
+      🔗 <a href="https://developers.google.com/speed/docs/insights/v5/get-started" target="_blank">키 발급 문서 (Google)</a><br>
+      → Google Cloud Console에서 API 활성화 → 키 생성 → 여기 붙여넣기. 무료 한도 하루 25,000회.
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>📋 점검 항목 (참고)</h2>
+    <p style="color:#9ca3af;font-size:13px;line-height:1.6;">
+      <strong>HTML 분석</strong>: schema(JSON-LD), meta·OG·Twitter, canonical, hreflang, viewport, headings, images alt, internal/external links, FAQ schema, E-E-A-T signals, RSS, lang<br>
+      <strong>외부 fetch</strong>: <code>/robots.txt</code>(AI 봇 12개 차단 여부), <code>/llms.txt</code>(존재·형식), <code>/sitemap.xml</code>(URL 수)<br>
+      <strong>아카이브</strong>: Wayback Machine 첫 스냅샷·총 스냅샷 수<br>
+      <strong>키워드 제안</strong>: Google Suggest, Naver 자동완성<br>
+      <strong>PSI(선택)</strong>: Mobile + Desktop Performance 점수, LCP, CLS, INP
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>🔒 프라이버시</h2>
+    <p style="color:#9ca3af;font-size:13px;">
+      이 확장은 외부 서버로 데이터를 전송하지 않습니다 (LLM API 미사용). PSI API 키는 <code>chrome.storage.sync</code>에 본인 계정에만 저장. 모든 분석은 다음 공개 API만 호출:<br>
+      • Google PageSpeed Insights API (사용자 키)<br>
+      • Google Suggest (suggestqueries.google.com)<br>
+      • Naver 자동완성 (ac.search.naver.com)<br>
+      • Wayback Machine (archive.org)<br>
+      • 분석 대상 사이트의 <code>/robots.txt</code>, <code>/llms.txt</code>, <code>/sitemap.xml</code>
+    </p>
+  </div>
+
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>
