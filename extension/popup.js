@@ -130,6 +130,22 @@ function updateToolLinks() {
   });
 }
 
+// ========== Status bar ==========
+function setStatus(text, level = 'progress') {
+  const bar = document.getElementById('status-bar');
+  const txt = document.getElementById('status-text');
+  if (!bar || !txt) return;
+  bar.style.display = '';
+  bar.classList.remove('done', 'error');
+  if (level === 'done') bar.classList.add('done');
+  if (level === 'error') bar.classList.add('error');
+  txt.textContent = text;
+}
+function hideStatus() {
+  const bar = document.getElementById('status-bar');
+  if (bar) bar.style.display = 'none';
+}
+
 // ========== Cards ==========
 function setCard(id, status, detail, level='good', raw='') {
   const el = document.getElementById(id);
@@ -196,6 +212,8 @@ async function runAnalysis() {
   if (!currentUrl) return;
   resetCards();
   document.body.classList.add('loading');
+  document.body.classList.add('analyzing');
+  setStatus('🔍 페이지 분석 중...', 'progress');
 
   const origin = new URL(currentUrl).origin;
   const host = new URL(currentUrl).host;
@@ -455,6 +473,8 @@ async function runAnalysis() {
   fetchSuggestions(domData);
 
   document.body.classList.remove('loading');
+  document.body.classList.remove('analyzing');
+  setStatus('✓ 페이지 분석 완료', 'done');
   lastAnalysis = { domData, bgResults, scores, weights };
 }
 
@@ -680,13 +700,15 @@ function extractDomData() {
   };
 }
 
-// ========== Site-wide analysis ==========
+// ========== Site-wide analysis (progressive) ==========
 async function runSiteAnalysis() {
   if (!currentUrl) return;
   const origin = new URL(currentUrl).origin;
 
   document.getElementById('site-empty').style.display = 'none';
   document.getElementById('site-results').style.display = '';
+  document.body.classList.add('analyzing');
+  setStatus('🏠 sitemap 수집 중...', 'progress');
 
   // Reset cards
   ['ds-pages','ds-author','ds-org','ds-schema-diversity','ds-faq-coverage','ds-freshness','ds-knowledge-graph'].forEach(id => {
@@ -695,32 +717,122 @@ async function runSiteAnalysis() {
     el.classList.remove('good','warn','bad');
     el.classList.add('pending');
     el.querySelector('.status').textContent = '⏳';
-    el.querySelector('.detail').textContent = '분석중...';
+    el.querySelector('.detail').textContent = '대기...';
   });
-  document.getElementById('site-pages-list').innerHTML =
-    '<div style="text-align:center;padding:16px;color:var(--text-muted);"><span class="spinner"></span> sitemap에서 페이지 수집 중...</div>';
+  document.getElementById('site-pages-list').innerHTML = '';
 
-  // Send to background
-  const result = await new Promise(resolve => {
-    chrome.runtime.sendMessage({ action: 'site-analysis', origin }, resolve);
+  // Step 1: get URL list
+  const sel = await new Promise(resolve => {
+    chrome.runtime.sendMessage({ action: 'site-select-urls', origin }, resolve);
   });
 
-  if (!result?.ok) {
-    document.getElementById('site-pages-list').innerHTML =
-      '<div style="color:var(--bad);">사이트 분석 실패: ' + (result?.error || 'unknown') + '</div>';
+  if (!sel?.ok) {
+    setStatus('❌ 사이트 분석 실패: ' + (sel?.error || 'unknown'), 'error');
+    document.body.classList.remove('analyzing');
     return;
   }
 
-  // Parse each page
-  const parsed = result.pages.map(p => ({
-    url: p.url,
-    ok: p.ok,
-    error: p.error,
-    data: p.ok ? parseHtmlString(p.html, p.url) : null
-  }));
+  const urls = sel.urls;
+  const total = urls.length;
 
-  renderSitePagesList(parsed);
-  renderSiteAggregate(parsed, result);
+  // Show selection summary
+  const reportTxt = (sel.groupReport || []).slice(0, 5).map(g =>
+    g.mode === 'all'
+      ? `/${g.prefix === '__root__' ? '' : g.prefix} (전수 ${g.total})`
+      : `/${g.prefix} (샘플 ${g.sampled}/${g.total})`
+  ).join(', ');
+  setStatus(`🏠 ${total}개 페이지 선정 — ${reportTxt}${(sel.groupReport||[]).length > 5 ? '…' : ''}`, 'progress');
+
+  // Render placeholder list
+  const listEl = document.getElementById('site-pages-list');
+  listEl.innerHTML = '';
+  const itemMap = {};
+  urls.forEach(url => {
+    const item = document.createElement('div');
+    item.className = 'site-page-item fetching';
+    item.innerHTML = `
+      <span class="icon">⏳</span>
+      <div class="body">
+        <div class="url">${url.replace(/^https?:\/\//,'')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">대기중...</div>
+      </div>
+    `;
+    listEl.appendChild(item);
+    itemMap[url] = item;
+  });
+
+  // Step 2: parallel fetch with concurrency limit
+  const CONCURRENCY = 5;
+  const parsed = [];
+  let done = 0;
+
+  await runWithConcurrency(urls, CONCURRENCY, async (url) => {
+    const r = await new Promise(resolve => {
+      chrome.runtime.sendMessage({ action: 'fetch-url', url }, resolve);
+    });
+    const data = r?.ok ? parseHtmlString(r.html, url) : null;
+    const entry = { url, ok: !!r?.ok, error: r?.error, data };
+    parsed.push(entry);
+    updateSitePageItem(itemMap[url], entry);
+    done++;
+    setStatus(`🏠 분석 중 ${done}/${total} 페이지 완료`, 'progress');
+  });
+
+  // Step 3: aggregate
+  renderSiteAggregate(parsed, { ...sel, total: parsed.length });
+  setStatus(`✓ 사이트 분석 완료 — ${parsed.filter(p => p.ok).length}/${total} 페이지 성공`, 'done');
+  document.body.classList.remove('analyzing');
+}
+
+async function runWithConcurrency(items, limit, worker) {
+  const queue = [...items];
+  const running = [];
+  while (queue.length > 0 || running.length > 0) {
+    while (running.length < limit && queue.length > 0) {
+      const item = queue.shift();
+      const p = worker(item).then(() => {
+        running.splice(running.indexOf(p), 1);
+      });
+      running.push(p);
+    }
+    if (running.length > 0) await Promise.race(running);
+  }
+}
+
+function updateSitePageItem(item, entry) {
+  if (!item) return;
+  item.classList.remove('fetching');
+  if (!entry.ok) {
+    item.classList.add('failed');
+    item.innerHTML = `
+      <span class="icon">✗</span>
+      <div class="body">
+        <div class="url">${entry.url.replace(/^https?:\/\//,'')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${entry.error || 'fetch 실패'}</div>
+      </div>
+    `;
+    return;
+  }
+  const s = entry.data || {};
+  const sig = (label, ok) => `<span class="signal ${ok?'ok':'no'}">${ok?'✓':'·'} ${label}</span>`;
+  const signals = `
+    <div class="signals">
+      ${sig('Schema', (s.schema?.blocks||0) > 0)}
+      ${sig('저자', !!s.eeat?.author)}
+      ${sig('Org', !!s.eeat?.organizationName)}
+      ${sig('날짜', !!s.eeat?.publishedTime)}
+      ${sig('FAQ', (s.schema?.types||[]).some(t => /FAQ|Question/i.test(t)))}
+      ${sig('sameAs', (s.eeat?.sameAsCount||0) > 0)}
+    </div>
+  `;
+  item.innerHTML = `
+    <span class="icon">✓</span>
+    <div class="body">
+      <div class="url">${entry.url.replace(/^https?:\/\//,'')}</div>
+      <div style="font-size:11px;color:var(--text);margin-bottom:3px;">${(s.title || '').slice(0, 60) || '<em>제목 없음</em>'}</div>
+      ${signals}
+    </div>
+  `;
 }
 
 function parseHtmlString(html, baseUrl) {

@@ -84,6 +84,63 @@
   }
   .btn-secondary:hover { color: var(--text); }
   body.loading .btn-primary { opacity: 0.5; pointer-events: none; }
+  body.analyzing .btn-primary, body.analyzing .btn-secondary { opacity: 0.6; pointer-events: none; }
+
+  .status-bar {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(90deg, rgba(99,102,241,0.18), rgba(139,92,246,0.10));
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .status-bar.done {
+    background: linear-gradient(90deg, rgba(16,185,129,0.18), rgba(16,185,129,0.05));
+    border-color: rgba(16,185,129,0.4);
+  }
+  .status-bar.error {
+    background: linear-gradient(90deg, rgba(239,68,68,0.18), rgba(239,68,68,0.05));
+    border-color: rgba(239,68,68,0.4);
+  }
+  .status-bar[style*="display:none"] { display: none !important; }
+  .status-bar[style*="display: none"] { display: none !important; }
+  .status-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  .status-bar.done .status-spinner {
+    border-color: rgba(16,185,129,0.3);
+    border-top-color: var(--good);
+    animation: none;
+    background: var(--good);
+    border: none;
+    position: relative;
+  }
+  .status-bar.done .status-spinner::after {
+    content: "✓";
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .status-bar.error .status-spinner {
+    animation: none;
+    background: var(--bad);
+    border: none;
+  }
 
   .body { padding: 14px 14px 24px; }
 
@@ -136,18 +193,24 @@
     display: flex;
     border-bottom: 1px solid var(--border);
     margin-bottom: 14px;
-    gap: 2px;
-    overflow-x: auto;
+    gap: 0;
+    overflow: hidden;
+    flex-wrap: nowrap;
   }
   .tab {
-    padding: 10px 16px;
+    padding: 8px 8px;
     cursor: pointer;
     color: var(--text-dim);
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
     border-bottom: 2px solid transparent;
     user-select: none;
     white-space: nowrap;
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .tab:hover { color: var(--text); }
   .tab.active {
@@ -382,9 +445,13 @@
     <div class="url" id="current-url" title="">로딩...</div>
     <div class="actions">
       <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
-      <button class="btn btn-secondary" id="btn-site" title="사이트 전체 샘플 분석">🏠 사이트</button>
+      <button class="btn btn-secondary" id="btn-site" title="사이트 전체 분석">🏠 사이트</button>
       <button class="btn btn-primary" id="btn-rerun">분석</button>
     </div>
+  </div>
+  <div class="status-bar" id="status-bar" style="display:none;">
+    <span class="status-spinner"></span>
+    <span class="status-text" id="status-text">분석 중...</span>
   </div>
 </div>
 
@@ -401,8 +468,8 @@
 
   <div class="tabs">
     <div class="tab active" data-tab="diag">진단</div>
-    <div class="tab" data-tab="site">🏠 사이트</div>
-    <div class="tab" data-tab="tools">외부 도구</div>
+    <div class="tab" data-tab="site">🏠사이트</div>
+    <div class="tab" data-tab="tools">도구</div>
     <div class="tab" data-tab="keywords">키워드</div>
     <div class="tab" data-tab="domain">도메인</div>
   </div>

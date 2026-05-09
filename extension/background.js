@@ -61,84 +61,141 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleNaverSuggest(msg.q).then(sendResponse);
     return true;
   }
-  if (msg.action === 'site-analysis') {
-    handleSiteAnalysis(msg.origin).then(sendResponse);
+  if (msg.action === 'site-select-urls') {
+    handleSiteSelectUrls(msg.origin).then(sendResponse);
+    return true;
+  }
+  if (msg.action === 'fetch-url') {
+    fetchText(msg.url, 10000).then(r => sendResponse({
+      url: msg.url, ok: r.ok, html: r.text || '', error: r.error
+    }));
     return true;
   }
 });
 
-// ===== Site-wide analysis: pick representative pages and fetch HTML =====
-async function handleSiteAnalysis(origin) {
+// ===== Site URL selection =====
+// Strategy:
+// 1. Always include homepage
+// 2. Always include ALL "about-like" URLs (high-priority, exhaustive scan)
+//    — author/team/profile/doctor/staff pages most often hold E-E-A-T signals
+// 3. Group remaining URLs by first path segment.
+//    Group <= GROUP_FULL_THRESHOLD → take all
+//    Group > threshold → random sample
+// 4. Cap total at MAX_TOTAL
+const GROUP_FULL_THRESHOLD = 10;
+const SAMPLE_PER_LARGE_GROUP = 3;
+const MAX_TOTAL = 35;
+
+// High-priority keywords — match anywhere in path. Includes Korean terms.
+const ABOUT_KEYWORDS = [
+  'about', 'about-us', 'aboutus',
+  'team', 'staff', 'author', 'authors', 'profile', 'profiles',
+  'doctor', 'doctors', 'physician', 'people', 'members', 'leadership',
+  'company', 'history', 'mission', 'vision',
+  'contact', 'contact-us',
+  // Korean
+  '소개', '회사', '회사소개', '저자', '의료진', '진료진', '연혁', '문의', '오시는길'
+];
+
+function isAboutLike(url) {
+  let path = '';
+  try { path = new URL(url).pathname.toLowerCase(); } catch { return false; }
+  // decode percent-encoded Korean
+  let decoded = path;
+  try { decoded = decodeURIComponent(path).toLowerCase(); } catch {}
+  return ABOUT_KEYWORDS.some(kw => decoded.includes(kw));
+}
+
+async function handleSiteSelectUrls(origin) {
   if (!origin) return { ok: false, error: 'no origin' };
 
-  // 1. Fetch sitemap.xml (may be sitemap index too)
+  // 1. Fetch sitemap.xml (may be a sitemap index)
   const sitemapRes = await fetchText(origin + '/sitemap.xml', 8000);
   let allUrls = [];
   if (sitemapRes.ok && sitemapRes.text) {
     const txt = sitemapRes.text;
     const isIndex = txt.includes('<sitemapindex');
     if (isIndex) {
-      // Pull first child sitemap and use it
-      const firstChild = txt.match(/<loc>([^<]+)<\/loc>/);
-      if (firstChild) {
-        const childRes = await fetchText(firstChild[1], 8000);
-        if (childRes.ok) {
-          allUrls = [...childRes.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+      const childUrls = [...txt.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]).slice(0, 5);
+      const childResults = await Promise.all(childUrls.map(u => fetchText(u, 8000)));
+      childResults.forEach(r => {
+        if (r.ok && r.text) {
+          [...r.text.matchAll(/<loc>([^<]+)<\/loc>/g)].forEach(m => allUrls.push(m[1]));
         }
-      }
+      });
     } else {
       allUrls = [...txt.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
     }
   }
 
-  // 2. Build candidate list (deduplicated)
-  const aboutKeywords = ['about', 'team', 'company', 'author', 'profile', 'staff',
-                         'contact', 'history', '소개', '회사', '저자', '의료진', '진료진'];
-  const candidates = [];
+  const selected = [];
   const seen = new Set();
   const add = (url) => {
-    if (!url) return;
     try {
       const u = new URL(url, origin).href;
-      if (seen.has(u)) return;
-      seen.add(u);
-      candidates.push(u);
+      if (!seen.has(u)) { seen.add(u); selected.push(u); }
     } catch {}
   };
 
-  // Always include homepage
+  // 1. Homepage always
   add(origin + '/');
 
-  // Pick "about-like" pages from sitemap
-  const aboutMatches = allUrls.filter(u => {
-    const lower = u.toLowerCase();
-    return aboutKeywords.some(kw => lower.includes(kw));
+  // 2. ALL about-like URLs (exhaustive)
+  const aboutUrls = allUrls.filter(isAboutLike);
+  aboutUrls.forEach(add);
+  const aboutCount = aboutUrls.length;
+
+  // 3. Common about paths even if not in sitemap
+  ['/about', '/about-us', '/team', '/company', '/contact'].forEach(p => {
+    if (!seen.has(origin + p) && !seen.has(origin + p + '/')) {
+      // Only add if sitemap is empty (avoid 404s on sites that have proper sitemap)
+      if (allUrls.length === 0) add(origin + p);
+    }
   });
-  aboutMatches.slice(0, 4).forEach(add);
 
-  // Random sample from rest
-  const rest = allUrls.filter(u => !seen.has(u));
-  // Simple shuffle
-  for (let i = rest.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [rest[i], rest[j]] = [rest[j], rest[i]];
+  // 4. Group remaining (non-about) URLs by first path segment
+  const remaining = allUrls.filter(u => !seen.has(u));
+  const groups = {};
+  remaining.forEach(u => {
+    try {
+      const path = new URL(u).pathname;
+      const segments = path.split('/').filter(Boolean);
+      const key = segments[0] || '__root__';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(u);
+    } catch {}
+  });
+
+  // 5. For each group: full or sample
+  const groupReport = [];
+  if (aboutCount > 0) {
+    groupReport.push({ prefix: 'about계열', total: aboutCount, mode: 'all' });
   }
-  rest.slice(0, 5).forEach(add);
+  for (const [prefix, urls] of Object.entries(groups)) {
+    if (urls.length <= GROUP_FULL_THRESHOLD) {
+      urls.forEach(add);
+      groupReport.push({ prefix, total: urls.length, mode: 'all' });
+    } else {
+      const shuffled = [...urls];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      shuffled.slice(0, SAMPLE_PER_LARGE_GROUP).forEach(add);
+      groupReport.push({ prefix, total: urls.length, mode: 'sample', sampled: SAMPLE_PER_LARGE_GROUP });
+    }
+  }
 
-  // Cap at 10 total
-  const finalList = candidates.slice(0, 10);
-
-  // 3. Fetch all in parallel (with timeout per request)
-  const fetched = await Promise.all(finalList.map(async (url) => {
-    const r = await fetchText(url, 10000);
-    return { url, ok: r.ok, html: r.text || '', error: r.error };
-  }));
+  // 6. Cap at MAX_TOTAL — about-like URLs are added first so they survive the cap
+  const finalList = selected.slice(0, MAX_TOTAL);
 
   return {
     ok: true,
     sitemapFound: sitemapRes.ok && allUrls.length > 0,
     sitemapUrlCount: allUrls.length,
-    pages: fetched
+    aboutCount,
+    urls: finalList,
+    groupReport
   };
 }
 
