@@ -642,9 +642,37 @@ function extractDomData() {
 
   const qPatternCount = questions.length + (html.match(/[\?？]/g) || []).length;
 
-  // E-E-A-T heuristics
-  const author = !!doc.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"]')
-    || /<[^>]+(class|id)="[^"]*author[^"]*"/i.test(html);
+  // E-E-A-T heuristics — multiple signals, especially Korean clinic patterns
+  const url = location.href;
+  const detectAuthor = () => {
+    if (doc.querySelector('meta[name="author"], meta[property="article:author"], meta[property="article:author:name"], [rel="author"]')) return true;
+    if (/<[^>]+(class|id)=["'][^"']*(author|byline|writer|doctor|physician|staff|profile|bio|profile-card|director|chief)[^"']*["']/i.test(html)) return true;
+    for (const s of ldScripts) {
+      try {
+        const j = JSON.parse(s.textContent);
+        const arr = Array.isArray(j) ? j : (j['@graph'] ? j['@graph'] : [j]);
+        for (const it of arr) {
+          if (!it) continue;
+          const ts = Array.isArray(it['@type']) ? it['@type'] : [it['@type']];
+          for (const t of ts) {
+            if (typeof t === 'string' && /(Person|Physician|MedicalProfessional|Doctor|Author)/i.test(t)) return true;
+          }
+          if (it.author) return true;
+        }
+      } catch {}
+    }
+    const headingsTxt = [...doc.querySelectorAll('h1,h2,h3,h4')].map(h => (h.textContent || '').trim()).join(' ');
+    if (/(원장|박사|교수|이사장|대표원장|전문의|진료의|선임연구원|수석연구원|소장|치과의사)/.test(headingsTxt)) return true;
+    const bodyTxt = (doc.body?.textContent || '').slice(0, 500);
+    if (/(원장|박사|교수|전문의)\s/.test(bodyTxt)) return true;
+    if (/\/(doctor|doctors|physician|profile|author|staff|team|member|people)/i.test(url)) return true;
+    try {
+      const decoded = decodeURIComponent(url);
+      if (/(의료진|진료진|원장|박사|소개)/.test(decoded)) return true;
+    } catch {}
+    return false;
+  };
+  const author = detectAuthor();
   const publishedTime = doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content') || '';
   let organizationName = '';
   ldScripts.forEach(s => {
@@ -860,8 +888,7 @@ function parseHtmlString(html, baseUrl) {
 
     const title = doc.querySelector('title')?.textContent?.trim() || '';
     const description = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-    const author = !!doc.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"]')
-      || /<[^>]+(class|id)="[^"]*author[^"]*"/i.test(html);
+    const author = detectAuthorFromDoc(doc, html, baseUrl);
     const publishedTime = doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content')
       || doc.querySelector('meta[name="date"]')?.getAttribute('content') || '';
 
@@ -877,6 +904,52 @@ function parseHtmlString(html, baseUrl) {
   } catch (e) {
     return { error: e.message };
   }
+}
+
+// Detect author/person/expert presence with multiple heuristics.
+// Catches Korean clinic/medical sites that don't use English schema or class names.
+function detectAuthorFromDoc(doc, html, url) {
+  // 1. Standard author meta tags
+  if (doc.querySelector('meta[name="author"], meta[property="article:author"], meta[property="article:author:name"], [rel="author"]')) return true;
+
+  // 2. Class/id naming (English + Korean clinic patterns)
+  if (/<[^>]+(class|id)=["'][^"']*(author|byline|writer|doctor|physician|staff|profile|bio|profile-card|director|chief)[^"']*["']/i.test(html)) return true;
+
+  // 3. JSON-LD with Person/Physician/MedicalProfessional or article author field
+  const ldScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+  for (const s of ldScripts) {
+    try {
+      const json = JSON.parse(s.textContent);
+      const arr = Array.isArray(json) ? json : (json['@graph'] ? json['@graph'] : [json]);
+      for (const item of arr) {
+        if (!item) continue;
+        const types = Array.isArray(item['@type']) ? item['@type'] : [item['@type']];
+        for (const t of types) {
+          if (typeof t === 'string' && /(Person|Physician|MedicalProfessional|Doctor|Author)/i.test(t)) return true;
+        }
+        if (item.author) return true;
+      }
+    } catch {}
+  }
+
+  // 4. Korean professional title in headings (clinic/hospital plain HTML pattern)
+  const headings = [...doc.querySelectorAll('h1,h2,h3,h4')].map(h => (h.textContent || '').trim()).join(' ');
+  if (/(원장|박사|교수|이사장|대표원장|전문의|진료의|선임연구원|수석연구원|소장|치과의사)/.test(headings)) return true;
+
+  // 5. Body text first 500 chars contains professional title pattern
+  const bodyText = (doc.body?.textContent || '').slice(0, 500);
+  if (/(원장|박사|교수|전문의)\s/.test(bodyText)) return true;
+
+  // 6. URL path indicates person profile page
+  if (url && /\/(doctor|doctors|physician|profile|author|staff|team|member|people|의료진|진료진|원장)/i.test(url)) return true;
+  if (url) {
+    try {
+      const decoded = decodeURIComponent(url);
+      if (/(의료진|진료진|원장|박사|소개)/.test(decoded)) return true;
+    } catch {}
+  }
+
+  return false;
 }
 
 function renderSitePagesList(parsed) {

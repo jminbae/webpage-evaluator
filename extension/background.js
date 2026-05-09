@@ -118,6 +118,37 @@ function isAboutLike(url) {
   return ABOUT_KEYWORDS.some(kw => decoded.includes(kw));
 }
 
+// Extract internal links from homepage HTML — works for SPAs without sitemap.
+// Returns absolute URLs same-origin only, with query string preserved (for ?idx= routing),
+// hash dropped.
+async function discoverHomepageLinks(origin) {
+  try {
+    const res = await fetchText(origin + '/', 10000);
+    if (!res.ok || !res.text) return [];
+    const html = res.text;
+    const links = new Set();
+    const re = /<a[^>]+href=["']([^"']+)["']/gi;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      let href = m[1];
+      if (!href) continue;
+      const lower = href.toLowerCase();
+      if (lower.startsWith('#') || lower.startsWith('mailto:') ||
+          lower.startsWith('javascript:') || lower.startsWith('tel:')) continue;
+      try {
+        const u = new URL(href, origin);
+        if (u.origin !== origin) continue;
+        // Drop hash, keep pathname + search (preserves ?idx=xxx for SPAs)
+        const cleaned = u.origin + u.pathname + u.search;
+        links.add(cleaned);
+      } catch {}
+    }
+    return [...links];
+  } catch {
+    return [];
+  }
+}
+
 async function handleSiteSelectUrls(origin) {
   if (!origin) return { ok: false, error: 'no origin' };
 
@@ -152,15 +183,28 @@ async function handleSiteSelectUrls(origin) {
   // 1. Homepage always
   add(origin + '/');
 
-  // 2. ALL about-like URLs (exhaustive)
+  // 2. ALL about-like URLs from sitemap (exhaustive)
   const aboutUrls = allUrls.filter(isAboutLike);
   aboutUrls.forEach(add);
   const aboutCount = aboutUrls.length;
 
-  // 3. Common about-like guess paths — fallback when sitemap is missing/sparse
-  // Many SPAs (Imweb, Wix, Cafe24) only register root URL in sitemap.
-  // 404s become failed entries in the page list — not fatal.
+  // 3. Discover homepage links — works for SPAs and sites without sitemap.
+  // Crawls homepage HTML, extracts <a href> tags, filters same-origin.
+  const homepageLinks = await discoverHomepageLinks(origin);
+  const homepageAboutLinks = homepageLinks.filter(u => isAboutLike(u) && !seen.has(u));
+  const homepageOtherLinks = homepageLinks.filter(u => !isAboutLike(u) && !seen.has(u));
+
+  // Always include all about-like homepage links
+  homepageAboutLinks.forEach(add);
+
+  // Cap other homepage links — more aggressive when sitemap is sparse
   const sitemapWasUseful = allUrls.length >= 3;
+  const homepageOtherCap = sitemapWasUseful ? 8 : 20;
+  homepageOtherLinks.slice(0, homepageOtherCap).forEach(add);
+  const homepageLinkCount = homepageLinks.length;
+
+  // 4. Common about-like guess paths — last-resort fallback
+  // (Most SPAs already have these as homepage links, so this rarely adds new entries.)
   const guessPaths = [
     '/about', '/about-us', '/aboutus',
     '/team', '/staff', '/doctors', '/doctor', '/profile',
@@ -168,7 +212,7 @@ async function handleSiteSelectUrls(origin) {
     '/소개', '/회사소개', '/의료진', '/진료진', '/오시는길'
   ];
   let guessAdded = 0;
-  if (!sitemapWasUseful) {
+  if (!sitemapWasUseful && homepageLinks.length < 5) {
     guessPaths.forEach(p => {
       const before = selected.length;
       add(origin + p);
