@@ -7,10 +7,36 @@
  * Extension has host_permissions: <all_urls>, so no CORS issues
  * =========================================================== */
 
-// Open side panel when extension icon clicked
-chrome.sidePanel
-  .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch((err) => console.error('sidePanel setup failed:', err));
+// ===== Side Panel Setup =====
+// Multiple registration points for robustness:
+// 1. Top-level (runs when SW starts)
+// 2. onInstalled (runs on install/update)
+// 3. onClicked fallback (manually opens panel if setPanelBehavior didn't take effect)
+
+if (chrome.sidePanel?.setPanelBehavior) {
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((err) => console.error('sidePanel.setPanelBehavior (top-level) failed:', err));
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  if (chrome.sidePanel?.setPanelBehavior) {
+    chrome.sidePanel
+      .setPanelBehavior({ openPanelOnActionClick: true })
+      .catch((err) => console.error('sidePanel.setPanelBehavior (onInstalled) failed:', err));
+  }
+});
+
+// Fallback: open side panel manually if setPanelBehavior didn't apply yet
+chrome.action.onClicked.addListener(async (tab) => {
+  try {
+    if (chrome.sidePanel?.open) {
+      await chrome.sidePanel.open({ windowId: tab.windowId });
+    }
+  } catch (err) {
+    console.error('sidePanel.open failed:', err);
+  }
+});
 
 const AI_BOTS = [
   'GPTBot', 'ClaudeBot', 'anthropic-ai', 'PerplexityBot',
