@@ -4,13 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>웹페이지 분석 도구 — Site Evaluation Toolkit</title>
-<meta name="description" content="블로그·웹사이트·웹앱 평가용 무료 도구 카탈로그. SEO·Schema·AEO/GEO·Core Web Vitals·접근성을 한 페이지에서.">
+<meta name="description" content="블로그·웹사이트·웹앱 평가용 무료 도구 카탈로그 + 즉시 자동 분석. SEO·Schema·AEO/GEO·Core Web Vitals·접근성을 한 페이지에서.">
 <style>
   :root {
     --bg: #0b0d12;
     --bg-card: #14171f;
     --bg-card-hover: #1a1f2b;
+    --bg-deep: #080a0f;
     --border: #232936;
+    --border-strong: #2d3548;
     --text: #e5e7eb;
     --text-dim: #9ca3af;
     --text-muted: #6b7280;
@@ -20,13 +22,19 @@
     --tag-freemium: #f59e0b;
     --tag-priority: #ef4444;
     --tag-installed: #8b5cf6;
+    --tag-auto: #06b6d4;
+    --good: #10b981;
+    --warn: #f59e0b;
+    --bad: #ef4444;
   }
   @media (prefers-color-scheme: light) {
     :root {
       --bg: #f9fafb;
       --bg-card: #ffffff;
       --bg-card-hover: #f3f4f6;
+      --bg-deep: #ffffff;
       --border: #e5e7eb;
+      --border-strong: #d1d5db;
       --text: #111827;
       --text-dim: #4b5563;
       --text-muted: #6b7280;
@@ -61,133 +69,213 @@
     flex-wrap: wrap;
     gap: 12px;
   }
-  .brand {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-  .brand-sub {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-weight: 400;
-    margin-left: 8px;
-  }
-  .top-nav {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  .brand { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand-sub { font-size: 12px; color: var(--text-muted); font-weight: 400; margin-left: 8px; }
+  .top-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .top-nav a {
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 14px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    transition: all 0.15s;
+    color: var(--text-dim); text-decoration: none; font-size: 14px;
+    padding: 6px 12px; border-radius: 6px; transition: all 0.15s;
   }
-  .top-nav a:hover {
-    color: var(--text);
+  .top-nav a:hover { color: var(--text); background: var(--bg-card); }
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+  .hero { margin-bottom: 24px; }
+  .hero h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .hero p { color: var(--text-dim); margin: 0 0 16px; max-width: 720px; }
+
+  /* URL Bar (sticky-ish) */
+  .url-bar {
     background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
   }
-  .cta-button {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white !important;
+  .url-bar-title {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     font-weight: 600;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
+    margin-bottom: 10px;
+  }
+  .url-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .url-row input[type="url"], .url-row input[type="text"] {
+    flex: 1;
+    min-width: 240px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .url-row input:focus { outline: none; border-color: var(--accent); }
+  .btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
   }
-  .cta-button:hover {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-    transform: translateY(-1px);
-  }
-  .cta-button .badge-new {
-    background: rgba(255,255,255,0.2);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    margin-left: 6px;
-  }
-  main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 24px 80px;
-  }
-  .hero {
-    margin-bottom: 32px;
-  }
-  .hero h1 {
-    font-size: 32px;
-    margin: 0 0 8px;
-    letter-spacing: -0.02em;
-  }
-  .hero p {
-    color: var(--text-dim);
-    margin: 0 0 16px;
-    max-width: 720px;
-  }
-  .filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-  .filter-btn {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .filter-btn:hover, .filter-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-  }
-  .search-box {
-    width: 100%;
-    max-width: 400px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+  .btn-secondary {
+    background: var(--bg);
     color: var(--text);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-bottom: 24px;
+    border: 1px solid var(--border);
   }
-  .search-box:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  .category {
-    margin-bottom: 48px;
-    scroll-margin-top: 80px;
-  }
-  .category-header {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    margin-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 12px;
-  }
-  .category-header h2 {
-    font-size: 20px;
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
-  .category-header .count {
-    font-size: 13px;
+  .btn-secondary:hover { background: var(--bg-card-hover); }
+  .url-status {
+    margin-top: 10px;
+    font-size: 12px;
     color: var(--text-muted);
   }
-  .category-desc {
-    color: var(--text-dim);
-    font-size: 14px;
-    margin: 0 0 20px;
+  .url-status.active { color: var(--good); }
+
+  details.advanced {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
   }
+  details.advanced summary {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 12px;
+    user-select: none;
+  }
+  details.advanced summary:hover { color: var(--text); }
+  .advanced-body { padding-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Quick Diagnostics */
+  .qd-section {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .qd-section h2 { margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  .qd-badge {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white; font-size: 10px;
+    padding: 3px 8px; border-radius: 4px; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .qd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .qd-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .qd-card h4 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .qd-card .qd-status {
+    font-size: 18px;
+  }
+  .qd-card .qd-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 4px 0 0;
+    word-break: break-word;
+  }
+  .qd-card.good { border-color: rgba(16, 185, 129, 0.4); }
+  .qd-card.warn { border-color: rgba(245, 158, 11, 0.4); }
+  .qd-card.bad { border-color: rgba(239, 68, 68, 0.4); }
+  .qd-card.pending { opacity: 0.5; }
+  .qd-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .qd-score {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .qd-score .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .qd-score .value { font-size: 24px; font-weight: 700; }
+  .qd-score .value.good { color: var(--good); }
+  .qd-score .value.warn { color: var(--warn); }
+  .qd-score .value.bad { color: var(--bad); }
+  .qd-detail-list {
+    margin-top: 16px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .qd-detail-list .row { padding: 4px 0; border-bottom: 1px dashed var(--border); }
+  .qd-detail-list .row:last-child { border-bottom: none; }
+  .qd-detail-list .key { color: var(--text); }
+  .qd-detail-list .ok { color: var(--good); }
+  .qd-detail-list .ng { color: var(--bad); }
+  .qd-detail-list .warn { color: var(--warn); }
+
+  /* Categories */
+  .toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+  }
+  .toc-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 600; }
+  .toc-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .toc-list a {
+    color: var(--text-dim); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border);
+  }
+  .toc-list a:hover { color: var(--text); border-color: var(--accent); }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-btn {
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-dim); padding: 6px 12px; border-radius: 6px;
+    font-size: 13px; cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .search-box {
+    width: 100%; max-width: 400px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 8px;
+    font-size: 14px; margin-bottom: 24px;
+  }
+  .search-box:focus { outline: none; border-color: var(--accent); }
+
+  .category { margin-bottom: 48px; scroll-margin-top: 80px; }
+  .category-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 12px;
+  }
+  .category-header h2 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .category-header .count { font-size: 13px; color: var(--text-muted); }
+  .category-desc { color: var(--text-dim); font-size: 14px; margin: 0 0 20px; }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -199,144 +287,48 @@
     border-radius: 12px;
     padding: 20px;
     transition: all 0.15s;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
   }
-  .card:hover {
-    background: var(--bg-card-hover);
-    border-color: var(--accent);
-    transform: translateY(-2px);
+  .card:hover { background: var(--bg-card-hover); border-color: var(--accent); transform: translateY(-2px); }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .card h3 { font-size: 16px; margin: 0; letter-spacing: -0.01em; }
+  .card h3 a { color: var(--text); text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .card h3 a.external::after {
+    content: "↗"; font-size: 12px; margin-left: 4px; color: var(--accent); opacity: 0.6;
   }
-  .card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-  .card h3 {
-    font-size: 16px;
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
-  .card h3 a {
-    color: var(--text);
-    text-decoration: none;
-  }
-  .card h3 a:hover {
-    color: var(--accent);
-  }
-  .card h3 a::after {
-    content: "↗";
-    font-size: 12px;
-    margin-left: 4px;
-    color: var(--accent);
-    opacity: 0.6;
-  }
-  .tags {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; }
   .tag {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
   }
   .tag.free { background: rgba(16, 185, 129, 0.15); color: var(--tag-free); }
   .tag.freemium { background: rgba(245, 158, 11, 0.15); color: var(--tag-freemium); }
   .tag.priority { background: rgba(239, 68, 68, 0.15); color: var(--tag-priority); }
   .tag.installed { background: rgba(139, 92, 246, 0.15); color: var(--tag-installed); }
-  .card .url {
-    color: var(--text-muted);
-    font-size: 11px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    margin: 0 0 12px;
-    word-break: break-all;
+  .tag.auto { background: rgba(6, 182, 212, 0.15); color: var(--tag-auto); }
+  .card .url { color: var(--text-muted); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0 0 12px; word-break: break-all; }
+  .card .purpose { color: var(--text-dim); font-size: 13px; margin: 0 0 12px; }
+  .card .checklist { background: var(--bg-deep); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin: 0 0 12px; }
+  .card .checklist-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600; }
+  .card .checklist ul { margin: 0; padding: 0; list-style: none; }
+  .card .checklist li { font-size: 12px; color: var(--text-dim); padding: 2px 0; position: relative; padding-left: 14px; }
+  .card .checklist li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+  .card .note { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: auto; padding-top: 8px; border-top: 1px dashed var(--border); }
+  .card .actions { margin-top: auto; padding-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .card .actions button {
+    background: var(--bg-deep); border: 1px solid var(--border);
+    color: var(--text-dim); font-size: 11px; padding: 6px 10px;
+    border-radius: 6px; cursor: pointer; transition: all 0.15s;
   }
-  .card .purpose {
-    color: var(--text-dim);
-    font-size: 13px;
-    margin: 0 0 12px;
+  .card .actions button:hover { color: var(--text); border-color: var(--accent); }
+  .card .actions button.copy-btn::before { content: "⎘ "; }
+  .card .actions a.tool-link {
+    background: var(--accent); color: white; font-size: 11px; padding: 6px 10px;
+    border-radius: 6px; text-decoration: none; font-weight: 600;
   }
-  .card .checklist {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin: 0 0 12px;
-  }
-  .card .checklist-title {
-    font-size: 11px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
-    font-weight: 600;
-  }
-  .card .checklist ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .card .checklist li {
-    font-size: 12px;
-    color: var(--text-dim);
-    padding: 2px 0;
-    position: relative;
-    padding-left: 14px;
-  }
-  .card .checklist li::before {
-    content: "→";
-    position: absolute;
-    left: 0;
-    color: var(--accent);
-  }
-  .card .note {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-style: italic;
-    margin-top: auto;
-    padding-top: 8px;
-    border-top: 1px dashed var(--border);
-  }
-  .toc {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 32px;
-  }
-  .toc-title {
-    font-size: 12px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-    font-weight: 600;
-  }
-  .toc-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .toc-list a {
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 13px;
-    padding: 4px 10px;
-    background: var(--bg);
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    transition: all 0.15s;
-  }
-  .toc-list a:hover {
-    color: var(--text);
-    border-color: var(--accent);
-  }
+  .card .actions a.tool-link::after { content: " ↗"; }
+
   .workflow-section {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
     border: 1px solid rgba(99, 102, 241, 0.3);
@@ -344,10 +336,7 @@
     padding: 24px;
     margin-bottom: 32px;
   }
-  .workflow-section h2 {
-    margin-top: 0;
-    font-size: 18px;
-  }
+  .workflow-section h2 { margin-top: 0; font-size: 18px; }
   .workflow-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -361,148 +350,23 @@
     padding: 14px;
   }
   .workflow-step .step-num {
-    font-size: 11px;
-    color: var(--accent);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
+    font-size: 11px; color: var(--accent); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
   }
-  .workflow-step h4 {
-    margin: 0 0 6px;
-    font-size: 14px;
+  .workflow-step h4 { margin: 0 0 6px; font-size: 14px; }
+  .workflow-step p { margin: 0; font-size: 12px; color: var(--text-dim); }
+  footer { border-top: 1px solid var(--border); margin-top: 80px; padding: 24px; text-align: center; color: var(--text-muted); font-size: 12px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); border: 1px solid var(--border-strong);
+    color: var(--text); padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    z-index: 1000;
   }
-  .workflow-step p {
-    margin: 0;
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-  footer {
-    border-top: 1px solid var(--border);
-    margin-top: 80px;
-    padding: 24px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 12px;
-  }
-  /* Comprehensive analysis section */
-  .ca-section {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
-    border: 1px solid rgba(99, 102, 241, 0.4);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 48px;
-  }
-  .ca-section h2 {
-    margin-top: 0;
-    font-size: 22px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .ca-section .ca-badge {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-  }
-  .ca-section p { color: var(--text-dim); }
-  .ca-input-group {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    flex-wrap: wrap;
-  }
-  .ca-input-group input {
-    flex: 1;
-    min-width: 240px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-  }
-  .ca-input-group button {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.15s;
-  }
-  .ca-input-group button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-  }
-  .ca-quick-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 16px;
-  }
-  .ca-quick-links a {
-    font-size: 12px;
-    color: var(--text-dim);
-    text-decoration: none;
-    padding: 4px 10px;
-    background: var(--bg-card);
-    border-radius: 4px;
-    border: 1px solid var(--border);
-  }
-  .ca-quick-links a:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-  /* Modal */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px;
-    max-width: 600px;
-    width: 100%;
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-  .modal h3 { margin-top: 0; }
-  .modal .close-btn {
-    float: right;
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    font-size: 22px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-  }
-  .modal pre {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 12px;
-    overflow-x: auto;
-    font-size: 12px;
-    color: var(--text-dim);
-  }
+  .toast.show { opacity: 1; }
+
   @media (max-width: 600px) {
     .hero h1 { font-size: 24px; }
     .header-inner { padding: 12px 16px; }
@@ -520,7 +384,7 @@
       <span class="brand-sub">Site Evaluation Toolkit</span>
     </div>
     <nav class="top-nav">
-      <a href="#comprehensive">종합 분석<span class="badge-new" style="font-size:9px;color:#a78bfa;margin-left:4px;">NEW</span></a>
+      <a href="#diagnostics">즉시 분석</a>
       <a href="#schema">Schema</a>
       <a href="#seo">SEO</a>
       <a href="#speed">속도</a>
@@ -534,34 +398,78 @@
 
 <section class="hero">
   <h1>웹페이지 분석 도구 카탈로그</h1>
-  <p>블로그·웹사이트·웹앱을 평가하기 위한 <strong>무료(또는 freemium 핵심 기능 무료)</strong> 도구를 카테고리별로 정리. URL만 넣으면 끝나는 도구가 대부분이에요. 아래 종합 분석은 별도 웹앱으로 개발 예정.</p>
+  <p>한 번의 URL 입력 → 모든 외부 도구로 자동 전달 + 즉시 자동 점검. <strong>LLM 없이 결정적 metric만</strong> 출력. 무료(또는 freemium 핵심 기능 무료) 도구만 모았어요.</p>
 </section>
 
-<!-- Comprehensive Analysis (Top Feature) -->
-<section class="ca-section" id="comprehensive">
-  <h2>🚀 종합 분석 <span class="ca-badge">NEW · 개발중</span></h2>
-  <p>URL 한 개만 넣으면 아래 도구들의 핵심 점검을 한꺼번에 돌리고, Claude가 자연어 보고서로 진단합니다. 현재는 컨셉 단계 — 별도 웹앱(<code>analyzer/</code>)으로 분리 개발 예정.</p>
-  <div class="ca-input-group">
-    <input type="url" id="ca-url" placeholder="https://example.com" />
-    <button onclick="openAnalyzeModal()">분석 시작 →</button>
+<!-- URL Bar -->
+<section class="url-bar">
+  <div class="url-bar-title">📍 검사할 URL을 한 번만 입력하세요</div>
+  <div class="url-row">
+    <input type="url" id="target-url" placeholder="https://example.com" autocomplete="off">
+    <button class="btn btn-primary" onclick="runDiagnostics()">즉시 분석 →</button>
+    <button class="btn btn-secondary" onclick="clearUrl()">지우기</button>
   </div>
-  <div class="ca-quick-links">
-    <strong style="color:var(--text-muted);font-size:12px;margin-right:4px;">자동 점검 항목:</strong>
-    <a>PageSpeed (Core Web Vitals)</a>
-    <a>Schema/JSON-LD 추출 및 검증</a>
-    <a>robots.txt AI 크롤러 허용</a>
-    <a>llms.txt 존재</a>
-    <a>OG/Twitter Card</a>
-    <a>모바일 viewport</a>
-    <a>이미지 alt·크기</a>
-    <a>한국 SEO 가이드(네이버)</a>
-    <a>Claude 종합 보고서</a>
-  </div>
+  <div class="url-status" id="url-status">URL을 입력하면 모든 외부 도구 링크가 자동으로 그 URL을 전달하도록 갱신됩니다.</div>
+  <details class="advanced">
+    <summary>⚙️ 고급 설정 (PageSpeed API 키 / CORS 프록시)</summary>
+    <div class="advanced-body">
+      <input type="text" id="psi-key" placeholder="PageSpeed Insights API 키 (선택, https://developers.google.com/speed/docs/insights/v5/get-started)" style="flex:1;min-width:280px;">
+      <button class="btn btn-secondary" onclick="saveSettings()">저장</button>
+    </div>
+    <div class="advanced-body" style="margin-top:8px;">
+      <select id="cors-proxy" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px;">
+        <option value="https://corsproxy.io/?">corsproxy.io (기본)</option>
+        <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
+        <option value="https://api.codetabs.com/v1/proxy?quest=">codetabs</option>
+      </select>
+      <span style="font-size:11px;color:var(--text-muted);align-self:center;">⚠ 공용 프록시는 가끔 다운될 수 있어요. 실패시 다른 걸로 변경하세요.</span>
+    </div>
+  </details>
 </section>
 
-<!-- Quick navigation -->
+<!-- Quick Diagnostics -->
+<section class="qd-section" id="diagnostics">
+  <h2>🚀 즉시 자동 분석 <span class="qd-badge">METRIC ONLY · LLM-FREE</span></h2>
+  <p style="color:var(--text-dim);margin:0;">위에 URL 입력 후 "즉시 분석" 클릭. 외부 도구를 안 거치고 브라우저에서 직접 결정적 점검 수행.</p>
+
+  <!-- Score summary -->
+  <div class="qd-summary" id="qd-summary" style="display:none;">
+    <div class="qd-score"><div class="label">종합</div><div class="value" id="score-total">—</div></div>
+    <div class="qd-score"><div class="label">Schema</div><div class="value" id="score-schema">—</div></div>
+    <div class="qd-score"><div class="label">Meta/SEO</div><div class="value" id="score-meta">—</div></div>
+    <div class="qd-score"><div class="label">AEO</div><div class="value" id="score-aeo">—</div></div>
+    <div class="qd-score"><div class="label">Performance</div><div class="value" id="score-perf">—</div></div>
+    <div class="qd-score"><div class="label">접근성</div><div class="value" id="score-a11y">—</div></div>
+  </div>
+
+  <div class="qd-grid" id="qd-grid">
+    <div class="qd-card pending" id="qd-html"><h4>HTML <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-schema"><h4>Schema (JSON-LD) <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-meta"><h4>Meta·OG·Twitter <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-canonical"><h4>Canonical·Hreflang <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-mobile"><h4>모바일 viewport <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-headings"><h4>헤딩 계층 (H1~H3) <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-images"><h4>이미지 alt <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-links"><h4>내부 링크 <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-robots"><h4>robots.txt — AI 크롤러 <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-llms"><h4>llms.txt <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-sitemap"><h4>sitemap.xml <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-faq"><h4>FAQ·Q&A 구조 <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-https"><h4>HTTPS·HSTS <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+    <div class="qd-card pending" id="qd-psi-mobile"><h4>PSI Mobile (LCP/CLS/INP) <span class="qd-status">⏳</span></h4><p class="qd-detail">PSI API 키 입력 시 자동</p></div>
+    <div class="qd-card pending" id="qd-psi-desktop"><h4>PSI Desktop <span class="qd-status">⏳</span></h4><p class="qd-detail">PSI API 키 입력 시 자동</p></div>
+    <div class="qd-card pending" id="qd-naver"><h4>네이버 SEO 적합성 <span class="qd-status">⏳</span></h4><p class="qd-detail">대기중</p></div>
+  </div>
+
+  <details style="margin-top:16px;">
+    <summary style="cursor:pointer;color:var(--text-dim);font-size:13px;">🔍 상세 결과 (raw)</summary>
+    <div class="qd-detail-list" id="qd-raw"><div class="row">아직 분석 전</div></div>
+  </details>
+</section>
+
+<!-- TOC -->
 <div class="toc">
-  <div class="toc-title">카테고리</div>
+  <div class="toc-title">카테고리 (외부 도구 카탈로그)</div>
   <div class="toc-list">
     <a href="#schema">🏗️ Schema 검증</a>
     <a href="#seo">🔍 SEO 기본</a>
@@ -577,69 +485,60 @@
   </div>
 </div>
 
-<input type="text" class="search-box" id="search" placeholder="🔍 도구 이름·키워드로 필터 (예: schema, naver, AI...)" oninput="filterCards()">
+<input type="text" class="search-box" id="search" placeholder="🔍 도구 이름·키워드로 필터" oninput="filterCards()">
 
 <!-- 1. Schema -->
 <section class="category" id="schema">
-  <div class="category-header">
-    <h2>🏗️ 1. 구조화 데이터(Schema) 검증</h2>
-    <span class="count">3 도구</span>
-  </div>
-  <p class="category-desc">검색 엔진과 AI가 페이지 콘텐츠를 이해하도록 돕는 JSON-LD 마크업 검증. 두 도구를 같이 돌리는 게 정석이에요.</p>
+  <div class="category-header"><h2>🏗️ 1. 구조화 데이터(Schema) 검증</h2><span class="count">3 도구</span></div>
+  <p class="category-desc">검색 엔진과 AI가 페이지 콘텐츠를 이해하도록 돕는 JSON-LD 마크업 검증.</p>
   <div class="grid">
 
-    <article class="card" data-tags="schema google rich free priority">
+    <article class="card" data-tags="schema google rich free priority" data-tool="rich-results">
       <div class="card-head">
-        <h3><a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener">Google Rich Results Test</a></h3>
-        <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span></div>
+        <h3><a class="external" href="https://search.google.com/test/rich-results" target="_blank" rel="noopener">Google Rich Results Test</a></h3>
+        <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span><span class="tag auto">URL 자동</span></div>
       </div>
       <p class="url">search.google.com/test/rich-results</p>
-      <p class="purpose">Google이 페이지의 구조화 데이터로 어떤 리치 결과를 보여줄지 검증. 검색 결과 미리보기까지 가능.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>리치 결과 적격 여부 (예: FAQ, Article, Product)</li>
-          <li>경고/에러 항목 (필수 필드 누락)</li>
-          <li>모바일 미리보기 확인</li>
-        </ul>
+      <p class="purpose">Google이 페이지의 구조화 데이터로 어떤 리치 결과를 보여줄지 검증.</p>
+      <div class="checklist"><div class="checklist-title">무엇을 봐야 하나</div><ul>
+        <li>리치 결과 적격 여부</li><li>경고/에러 항목</li><li>모바일 미리보기</li>
+      </ul></div>
+      <div class="actions">
+        <a class="tool-link" href="https://search.google.com/test/rich-results" target="_blank" rel="noopener" data-pattern="https://search.google.com/test/rich-results?url={URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
-      <p class="note">Google이 지원하는 타입만 검증 — Person/MedicalOrganization 등은 코멘트가 없을 수 있음.</p>
     </article>
 
-    <article class="card" data-tags="schema validator free priority">
+    <article class="card" data-tags="schema validator free priority" data-tool="schema-validator">
       <div class="card-head">
-        <h3><a href="https://validator.schema.org/" target="_blank" rel="noopener">Schema.org Markup Validator</a></h3>
-        <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span></div>
+        <h3><a class="external" href="https://validator.schema.org/" target="_blank" rel="noopener">Schema.org Markup Validator</a></h3>
+        <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span><span class="tag auto">URL 자동</span></div>
       </div>
       <p class="url">validator.schema.org</p>
-      <p class="purpose">schema.org 800+ 타입 전체 검증. JSON-LD/RDFa/Microdata 문법 오류 식별 + 그래프 요약.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>모든 타입의 필수 속성 충족 여부</li>
-          <li>참조(@id) 연결이 끊어지지 않았는지</li>
-          <li>에러(빨강) → 경고(노랑) 순으로 해결</li>
-        </ul>
+      <p class="purpose">schema.org 800+ 타입 전체 검증. JSON-LD/RDFa/Microdata.</p>
+      <div class="checklist"><div class="checklist-title">무엇을 봐야 하나</div><ul>
+        <li>모든 타입의 필수 속성 충족 여부</li><li>참조(@id) 연결</li><li>에러 → 경고 순으로 해결</li>
+      </ul></div>
+      <div class="actions">
+        <a class="tool-link" href="https://validator.schema.org/" target="_blank" rel="noopener" data-pattern="https://validator.schema.org/#url={URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
-      <p class="note">Google 미지원 타입까지 검증 — Person/Physician 등 의료 스키마는 여기가 더 정확.</p>
     </article>
 
-    <article class="card" data-tags="schema visualization free">
+    <article class="card" data-tags="schema visualization free" data-tool="classy">
       <div class="card-head">
-        <h3><a href="https://classyschema.org/Visualisation" target="_blank" rel="noopener">Classy Schema Viewer</a></h3>
+        <h3><a class="external" href="https://classyschema.org/Visualisation" target="_blank" rel="noopener">Classy Schema Viewer</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">classyschema.org/Visualisation</p>
       <p class="purpose">엔티티 관계를 인터랙티브 그래프로 시각화. JS 렌더링 후 동적 콘텐츠도 잡음.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>엔티티 간 관계가 의도대로 연결됐는지</li>
-          <li>고립된 노드(연결 없는 스키마) 없는지</li>
-          <li>데이터 모델 디버깅</li>
-        </ul>
+      <div class="checklist"><div class="checklist-title">무엇을 봐야 하나</div><ul>
+        <li>엔티티 간 관계가 의도대로 연결됐는지</li><li>고립된 노드(연결 없는 스키마) 없는지</li>
+      </ul></div>
+      <div class="actions">
+        <a class="tool-link" href="https://classyschema.org/Visualisation" target="_blank" rel="noopener" data-pattern="https://classyschema.org/Visualisation/{URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
-      <p class="note">복잡한 데이터 구조(원장-클리닉-Q&A 등) 디버깅에 최적.</p>
     </article>
 
   </div>
@@ -647,65 +546,43 @@
 
 <!-- 2. SEO -->
 <section class="category" id="seo">
-  <div class="category-header">
-    <h2>🔍 2. SEO 기본 — 검색엔진 등록·관리</h2>
-    <span class="count">3 도구</span>
-  </div>
-  <p class="category-desc">한국 시장이면 Google + Naver 둘 다 필수 등록. 데이터가 누적되니 빨리 등록할수록 이득.</p>
+  <div class="category-header"><h2>🔍 2. SEO 기본 — 검색엔진 등록·관리</h2><span class="count">3 도구</span></div>
+  <p class="category-desc">한국 시장이면 Google + Naver 둘 다 필수 등록. 본인 사이트 인증 필요.</p>
   <div class="grid">
 
-    <article class="card" data-tags="google search console seo free priority">
+    <article class="card" data-tags="google search console seo free priority" data-tool="gsc">
       <div class="card-head">
-        <h3><a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a></h3>
+        <h3><a class="external" href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a></h3>
         <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span></div>
       </div>
       <p class="url">search.google.com/search-console</p>
-      <p class="purpose">Google 검색 트래픽·실적 측정, URL 검사, 색인 상태 확인. SEO의 시작점.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>사이트맵 제출 (sitemap.xml)</li>
-          <li>색인 생성 여부 (URL 검사)</li>
-          <li>Core Web Vitals 리포트</li>
-          <li>구조화 데이터 오류 리포트</li>
-          <li>검색어별 노출·CTR</li>
-        </ul>
-      </div>
+      <p class="purpose">Google 검색 트래픽·실적 측정, URL 검사, 색인 상태 확인.</p>
+      <div class="checklist"><div class="checklist-title">무엇을 봐야 하나</div><ul>
+        <li>사이트맵 제출 (sitemap.xml)</li><li>색인 생성 여부 (URL 검사)</li><li>Core Web Vitals 리포트</li><li>구조화 데이터 오류 리포트</li>
+      </ul></div>
+      <p class="note">사이트 소유자 인증이 필요 — 본인 도메인만 등록 가능.</p>
     </article>
 
-    <article class="card" data-tags="naver search advisor korea seo free priority">
+    <article class="card" data-tags="naver search advisor korea seo free priority" data-tool="naver-advisor">
       <div class="card-head">
-        <h3><a href="https://searchadvisor.naver.com/" target="_blank" rel="noopener">Naver Search Advisor</a></h3>
+        <h3><a class="external" href="https://searchadvisor.naver.com/" target="_blank" rel="noopener">Naver Search Advisor</a></h3>
         <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span></div>
       </div>
       <p class="url">searchadvisor.naver.com</p>
-      <p class="purpose">네이버 검색 노출/클릭, 사이트 진단, RSS·사이트맵 제출. 한국 트래픽 절반 이상이 네이버.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>색인 URL 수 / 수집제한 / 색인제외</li>
-          <li>SEO 이슈 URL 리포트</li>
-          <li>RSS 제출 (필수)</li>
-          <li>웹마스터 도구의 robots.txt 검증</li>
-        </ul>
-      </div>
-      <p class="note">의료 콘텐츠·로컬 비즈니스면 Google보다 네이버 가중치가 높음.</p>
+      <p class="purpose">네이버 검색 노출/클릭, 사이트 진단, RSS·사이트맵 제출.</p>
+      <div class="checklist"><div class="checklist-title">무엇을 봐야 하나</div><ul>
+        <li>색인 URL 수 / 수집제한 / 색인제외</li><li>SEO 이슈 URL 리포트</li><li>RSS 제출 (필수)</li>
+      </ul></div>
+      <p class="note">의료 콘텐츠·로컬 비즈니스면 Google보다 네이버 가중치 ↑.</p>
     </article>
 
-    <article class="card" data-tags="bing webmaster aeo free">
+    <article class="card" data-tags="bing webmaster aeo free" data-tool="bing-wm">
       <div class="card-head">
-        <h3><a href="https://www.bing.com/webmasters" target="_blank" rel="noopener">Bing Webmaster Tools</a></h3>
+        <h3><a class="external" href="https://www.bing.com/webmasters" target="_blank" rel="noopener">Bing Webmaster Tools</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">bing.com/webmasters</p>
-      <p class="purpose">Bing 색인 등록. ChatGPT가 Bing 인덱스를 쓰던 시절 흔적이 있어 AEO에 약간 도움.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>등록만 해두면 충분 (5분)</li>
-          <li>가끔 사이트맵 재제출</li>
-        </ul>
-      </div>
+      <p class="purpose">Bing 색인 등록. ChatGPT가 Bing 인덱스 쓰던 시절 흔적이 있어 AEO에 도움.</p>
     </article>
 
   </div>
@@ -713,46 +590,33 @@
 
 <!-- 3. Speed -->
 <section class="category" id="speed">
-  <div class="category-header">
-    <h2>⚡ 3. 페이지 속도·Core Web Vitals</h2>
-    <span class="count">2 도구</span>
-  </div>
-  <p class="category-desc">모바일 성능은 SEO 점수에 직결. 이미지 크기·LCP·CLS·INP가 핵심.</p>
+  <div class="category-header"><h2>⚡ 3. 페이지 속도·Core Web Vitals</h2><span class="count">2 도구</span></div>
+  <p class="category-desc">모바일 성능은 SEO 점수에 직결. LCP/CLS/INP가 핵심.</p>
   <div class="grid">
 
-    <article class="card" data-tags="pagespeed google speed cwv free priority">
+    <article class="card" data-tags="pagespeed google speed cwv free priority" data-tool="psi">
       <div class="card-head">
-        <h3><a href="https://pagespeed.web.dev/" target="_blank" rel="noopener">Google PageSpeed Insights</a></h3>
-        <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span></div>
+        <h3><a class="external" href="https://pagespeed.web.dev/" target="_blank" rel="noopener">Google PageSpeed Insights</a></h3>
+        <div class="tags"><span class="tag free">무료</span><span class="tag priority">필수</span><span class="tag auto">URL 자동</span></div>
       </div>
       <p class="url">pagespeed.web.dev</p>
       <p class="purpose">URL 입력 → 모바일/데스크탑 점수, LCP·FID·CLS·INP 진단.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>모바일 점수 (특히)</li>
-          <li>LCP &lt; 2.5s, INP &lt; 200ms, CLS &lt; 0.1</li>
-          <li>이미지 최적화 권고 (WebP, lazy load)</li>
-          <li>JavaScript 차단 시간</li>
-        </ul>
+      <div class="checklist"><div class="checklist-title">기준</div><ul>
+        <li>LCP &lt; 2.5s, INP &lt; 200ms, CLS &lt; 0.1</li><li>모바일 점수 ≥ 90 권장</li><li>이미지 최적화 (WebP, lazy load)</li>
+      </ul></div>
+      <div class="actions">
+        <a class="tool-link" href="https://pagespeed.web.dev/" target="_blank" rel="noopener" data-pattern="https://pagespeed.web.dev/analysis?url={URL}&form_factor=mobile">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
     </article>
 
-    <article class="card" data-tags="lighthouse chrome devtools free priority installed">
+    <article class="card" data-tags="lighthouse chrome devtools free priority installed" data-tool="lighthouse">
       <div class="card-head">
-        <h3><a href="chrome://flags" onclick="alert('Chrome DevTools (F12) → Lighthouse 탭'); return false;">Chrome DevTools — Lighthouse</a></h3>
+        <h3>Chrome DevTools — Lighthouse</h3>
         <div class="tags"><span class="tag installed">브라우저 내장</span><span class="tag priority">필수</span></div>
       </div>
       <p class="url">F12 → Lighthouse 탭 → Generate Report</p>
-      <p class="purpose">PSI와 같은 엔진. Performance·Accessibility·SEO·Best Practices·PWA 5개 카테고리 한 번에.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>Performance, SEO, Accessibility 90+ 목표</li>
-          <li>PWA 점수 (PWA 사이트라면)</li>
-          <li>실제 디바이스 시뮬레이션</li>
-        </ul>
-      </div>
+      <p class="purpose">PSI와 같은 엔진. Performance·Accessibility·SEO·Best Practices·PWA 5개 카테고리.</p>
     </article>
 
   </div>
@@ -760,85 +624,52 @@
 
 <!-- 4. AEO/GEO -->
 <section class="category" id="aeo">
-  <div class="category-header">
-    <h2>🤖 4. AEO·GEO — AI 검색 가시성</h2>
-    <span class="count">4 도구</span>
-  </div>
-  <p class="category-desc">ChatGPT·Claude·Perplexity 등 LLM이 사이트를 인용·참조하는 정도 측정. 신생 영역이라 절대 기준 없음 — 교차 확인 필수.</p>
+  <div class="category-header"><h2>🤖 4. AEO·GEO — AI 검색 가시성</h2><span class="count">4 도구</span></div>
+  <p class="category-desc">신생 영역이라 절대 기준 없음 — 교차 확인 필수.</p>
   <div class="grid">
 
-    <article class="card" data-tags="ai rank lab aeo geo freemium">
+    <article class="card" data-tags="ai rank lab aeo geo freemium" data-tool="airanklab">
       <div class="card-head">
-        <h3><a href="https://www.airanklab.com/" target="_blank" rel="noopener">AI Rank Lab</a></h3>
+        <h3><a class="external" href="https://www.airanklab.com/" target="_blank" rel="noopener">AI Rank Lab</a></h3>
         <div class="tags"><span class="tag freemium">Freemium</span></div>
       </div>
       <p class="url">airanklab.com</p>
-      <p class="purpose">SEO·AEO·GEO 100+ 신호 분석. ChatGPT/Claude/Gemini/Perplexity 가시성 평가 + LLMs.txt 검증.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>통합 점수 추세 (단일 점수보다)</li>
-          <li>LLMs.txt 검증 결과</li>
-          <li>E-E-A-T 평가</li>
-          <li>AI 봇 접근성</li>
-        </ul>
+      <p class="purpose">SEO·AEO·GEO 100+ 신호 분석. ChatGPT/Claude/Gemini/Perplexity 가시성.</p>
+      <div class="actions">
+        <a class="tool-link" href="https://www.airanklab.com/" target="_blank" rel="noopener" data-pattern="https://www.airanklab.com/?url={URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
     </article>
 
-    <article class="card" data-tags="geoptie geo audit freemium">
+    <article class="card" data-tags="geoptie geo audit free" data-tool="geoptie">
       <div class="card-head">
-        <h3><a href="https://geoptie.com/free-geo-audit" target="_blank" rel="noopener">Geoptie 무료 GEO 감사</a></h3>
+        <h3><a class="external" href="https://geoptie.com/free-geo-audit" target="_blank" rel="noopener">Geoptie 무료 GEO 감사</a></h3>
         <div class="tags"><span class="tag free">무료 감사</span></div>
       </div>
       <p class="url">geoptie.com/free-geo-audit</p>
       <p class="purpose">URL 입력 → 가입 없이 1분. 6개 GEO 차원 액션 가능 리포트.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>Citation readiness</li>
-          <li>Answer alignment</li>
-          <li>Knowledge graph</li>
-          <li>Content authority</li>
-          <li>Technical optimization</li>
-          <li>Competitive positioning</li>
-        </ul>
+      <div class="actions">
+        <a class="tool-link" href="https://geoptie.com/free-geo-audit" target="_blank" rel="noopener" data-pattern="https://geoptie.com/free-geo-audit?url={URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
     </article>
 
-    <article class="card" data-tags="otterly ai geo free">
+    <article class="card" data-tags="otterly ai geo free" data-tool="otterly">
       <div class="card-head">
-        <h3><a href="https://otterly.ai/geo-tools" target="_blank" rel="noopener">OtterlyAI 무료 GEO 도구</a></h3>
+        <h3><a class="external" href="https://otterly.ai/geo-tools" target="_blank" rel="noopener">OtterlyAI 무료 GEO 도구</a></h3>
         <div class="tags"><span class="tag freemium">Freemium</span></div>
       </div>
       <p class="url">otterly.ai/geo-tools</p>
-      <p class="purpose">AI 키워드 리서치, AI 레퍼럴 트래픽, Query Fan Out, GEO 콘텐츠 체크, AI Crawler Simulation.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>AI Crawler Simulation</li>
-          <li>Query Fan Out</li>
-          <li>GEO 콘텐츠 체크</li>
-        </ul>
-      </div>
+      <p class="purpose">AI 키워드 리서치, AI 레퍼럴 트래픽, Query Fan Out, AI Crawler Simulation.</p>
     </article>
 
-    <article class="card" data-tags="aeo geo audit chrome extension free">
+    <article class="card" data-tags="aeo geo audit chrome extension free" data-tool="aeo-ext">
       <div class="card-head">
-        <h3><a href="https://chromewebstore.google.com/search/AEO%20GEO%20Audit" target="_blank" rel="noopener">AEO/GEO Audit (Chrome 확장)</a></h3>
+        <h3><a class="external" href="https://chromewebstore.google.com/search/AEO%20GEO%20Audit" target="_blank" rel="noopener">AEO/GEO Audit (Chrome 확장)</a></h3>
         <div class="tags"><span class="tag free">무료</span><span class="tag priority">실용</span></div>
       </div>
       <p class="url">Chrome 웹스토어 검색 "AEO GEO Audit"</p>
-      <p class="purpose">21+ 점검 항목을 페이지마다 한 번 클릭으로. 가장 실용적.</p>
-      <div class="checklist">
-        <div class="checklist-title">점검 항목</div>
-        <ul>
-          <li>Meta Title/Description, Canonical, Hreflang</li>
-          <li>llms.txt, robots.txt AI 크롤러</li>
-          <li>JSON-LD, FAQ 섹션, 콘텐츠 신선도</li>
-          <li>XML Sitemap, 내부 링크, alt 텍스트</li>
-          <li>모바일 viewport, SSL, ARIA, semantic HTML</li>
-        </ul>
-      </div>
+      <p class="purpose">21+ 점검 항목을 페이지마다 한 번 클릭으로.</p>
     </article>
 
   </div>
@@ -846,46 +677,39 @@
 
 <!-- 5. Domain -->
 <section class="category" id="domain">
-  <div class="category-header">
-    <h2>📊 5. 도메인 점수·백링크 (PageRank 대체)</h2>
-    <span class="count">3 도구</span>
-  </div>
-  <p class="category-desc">공식 PageRank는 2016년 폐기됨. 서드파티 추정치이니 절대 점수보다 추세를 봐요.</p>
+  <div class="category-header"><h2>📊 5. 도메인 점수·백링크</h2><span class="count">3 도구</span></div>
+  <p class="category-desc">공식 PageRank는 폐기됨. 서드파티 추정치라 추세만 봐요.</p>
   <div class="grid">
 
-    <article class="card" data-tags="ubersuggest domain freemium">
+    <article class="card" data-tags="ubersuggest domain freemium" data-tool="ubersuggest">
       <div class="card-head">
-        <h3><a href="https://neilpatel.com/ubersuggest/" target="_blank" rel="noopener">Ubersuggest</a></h3>
+        <h3><a class="external" href="https://neilpatel.com/ubersuggest/" target="_blank" rel="noopener">Ubersuggest</a></h3>
         <div class="tags"><span class="tag freemium">Freemium</span></div>
       </div>
       <p class="url">neilpatel.com/ubersuggest</p>
-      <p class="purpose">도메인 점수, 백링크 일부, 키워드 일부. 무료는 하루 3회 검색.</p>
+      <p class="purpose">도메인 점수, 백링크 일부, 키워드 일부. 무료 하루 3회.</p>
+      <div class="actions">
+        <a class="tool-link" href="https://neilpatel.com/ubersuggest/" target="_blank" rel="noopener" data-pattern="https://app.neilpatel.com/en/traffic_analyzer/overview?domain={URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
+      </div>
     </article>
 
-    <article class="card" data-tags="moz link explorer domain freemium">
+    <article class="card" data-tags="moz link explorer domain freemium" data-tool="moz">
       <div class="card-head">
-        <h3><a href="https://moz.com/link-explorer" target="_blank" rel="noopener">Moz Link Explorer</a></h3>
+        <h3><a class="external" href="https://moz.com/link-explorer" target="_blank" rel="noopener">Moz Link Explorer</a></h3>
         <div class="tags"><span class="tag freemium">월 10회 무료</span></div>
       </div>
       <p class="url">moz.com/link-explorer</p>
       <p class="purpose">DA(Domain Authority), PA(Page Authority), 백링크 분석.</p>
     </article>
 
-    <article class="card" data-tags="ahrefs webmaster tools domain free">
+    <article class="card" data-tags="ahrefs webmaster tools domain free" data-tool="ahrefs-wm">
       <div class="card-head">
-        <h3><a href="https://ahrefs.com/webmaster-tools" target="_blank" rel="noopener">Ahrefs Webmaster Tools</a></h3>
+        <h3><a class="external" href="https://ahrefs.com/webmaster-tools" target="_blank" rel="noopener">Ahrefs Webmaster Tools</a></h3>
         <div class="tags"><span class="tag free">본인 사이트 무료</span></div>
       </div>
       <p class="url">ahrefs.com/webmaster-tools</p>
-      <p class="purpose">소유 사이트 한정 무료. DR(Domain Rating), 백링크, 기술 SEO 감사.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>DR 추세 (절대값보다)</li>
-          <li>백링크 품질 (스팸 제외)</li>
-          <li>기술 SEO 이슈 리포트</li>
-        </ul>
-      </div>
+      <p class="purpose">소유 사이트 한정 무료. DR, 백링크, 기술 SEO 감사.</p>
     </article>
 
   </div>
@@ -893,59 +717,40 @@
 
 <!-- 6. Local -->
 <section class="category" id="local">
-  <div class="category-header">
-    <h2>🏪 6. 로컬·비즈니스 노출</h2>
-    <span class="count">4 도구</span>
-  </div>
+  <div class="category-header"><h2>🏪 6. 로컬·비즈니스 노출</h2><span class="count">4 도구</span></div>
   <p class="category-desc">클리닉·매장·이커머스라면 지도/쇼핑 노출이 트래픽의 메인.</p>
   <div class="grid">
 
-    <article class="card" data-tags="google business profile local free priority">
+    <article class="card" data-tags="google business profile local free priority" data-tool="gbp">
       <div class="card-head">
-        <h3><a href="https://www.google.com/business/" target="_blank" rel="noopener">Google Business Profile</a></h3>
+        <h3><a class="external" href="https://www.google.com/business/" target="_blank" rel="noopener">Google Business Profile</a></h3>
         <div class="tags"><span class="tag free">무료</span><span class="tag priority">로컬 필수</span></div>
       </div>
       <p class="url">google.com/business</p>
       <p class="purpose">Google 지도/검색 노출. 로컬 비즈니스의 거의 전부.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>NAP(Name·Address·Phone) 일관성</li>
-          <li>리뷰 수·평점</li>
-          <li>사진/영업시간/카테고리</li>
-        </ul>
-      </div>
     </article>
 
-    <article class="card" data-tags="naver smart place korea local free priority">
+    <article class="card" data-tags="naver smart place korea local free priority" data-tool="naver-smartplace">
       <div class="card-head">
-        <h3><a href="https://smartplace.naver.com/" target="_blank" rel="noopener">Naver 스마트플레이스</a></h3>
+        <h3><a class="external" href="https://smartplace.naver.com/" target="_blank" rel="noopener">Naver 스마트플레이스</a></h3>
         <div class="tags"><span class="tag free">무료</span><span class="tag priority">한국 필수</span></div>
       </div>
       <p class="url">smartplace.naver.com</p>
       <p class="purpose">네이버 지도/플레이스 노출. 한국 로컬 트래픽 메인.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>업체 정보 정확성</li>
-          <li>방문자 리뷰 / 블로그 리뷰</li>
-          <li>예약·톡톡 연결</li>
-        </ul>
-      </div>
     </article>
 
-    <article class="card" data-tags="merchant center ecommerce free">
+    <article class="card" data-tags="merchant center ecommerce free" data-tool="merchant">
       <div class="card-head">
-        <h3><a href="https://merchants.google.com/" target="_blank" rel="noopener">Google Merchant Center</a></h3>
+        <h3><a class="external" href="https://merchants.google.com/" target="_blank" rel="noopener">Google Merchant Center</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">merchants.google.com</p>
       <p class="purpose">이커머스 — Google 쇼핑 노출.</p>
     </article>
 
-    <article class="card" data-tags="naver shopping korea ecommerce free">
+    <article class="card" data-tags="naver shopping korea ecommerce free" data-tool="naver-shopping">
       <div class="card-head">
-        <h3><a href="https://adcenter.shopping.naver.com/" target="_blank" rel="noopener">네이버 쇼핑 파트너센터</a></h3>
+        <h3><a class="external" href="https://adcenter.shopping.naver.com/" target="_blank" rel="noopener">네이버 쇼핑 파트너센터</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">adcenter.shopping.naver.com</p>
@@ -957,38 +762,26 @@
 
 <!-- 7. Trends -->
 <section class="category" id="trends">
-  <div class="category-header">
-    <h2>📈 7. 트렌드·키워드 리서치</h2>
-    <span class="count">2 도구</span>
-  </div>
-  <p class="category-desc">콘텐츠 기획·SEO 전략 의사결정용. 한국은 두 개 다 봐야 정확.</p>
+  <div class="category-header"><h2>📈 7. 트렌드·키워드 리서치</h2><span class="count">2 도구</span></div>
+  <p class="category-desc">콘텐츠 기획·SEO 전략 의사결정용. 키워드 기반이라 URL 자동전달은 의미 없음.</p>
   <div class="grid">
 
-    <article class="card" data-tags="google trends keyword free">
+    <article class="card" data-tags="google trends keyword free" data-tool="trends">
       <div class="card-head">
-        <h3><a href="https://trends.google.com/" target="_blank" rel="noopener">Google Trends</a></h3>
+        <h3><a class="external" href="https://trends.google.com/" target="_blank" rel="noopener">Google Trends</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">trends.google.com</p>
       <p class="purpose">키워드 추세, 지역별 관심도. 글로벌·국가별 비교.</p>
     </article>
 
-    <article class="card" data-tags="naver datalab korea keyword free">
+    <article class="card" data-tags="naver datalab korea keyword free" data-tool="datalab">
       <div class="card-head">
-        <h3><a href="https://datalab.naver.com/" target="_blank" rel="noopener">Naver DataLab</a></h3>
+        <h3><a class="external" href="https://datalab.naver.com/" target="_blank" rel="noopener">Naver DataLab</a></h3>
         <div class="tags"><span class="tag free">무료</span><span class="tag priority">한국 필수</span></div>
       </div>
       <p class="url">datalab.naver.com</p>
-      <p class="purpose">네이버 검색 트렌드 + 연령/성별 비율. 한국 시장 분석에 필수.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>키워드 검색량 추이</li>
-          <li>연령대·성별 검색 비율</li>
-          <li>지역별 검색 비율</li>
-          <li>쇼핑인사이트 (이커머스)</li>
-        </ul>
-      </div>
+      <p class="purpose">네이버 검색 트렌드 + 연령/성별 비율.</p>
     </article>
 
   </div>
@@ -996,95 +789,69 @@
 
 <!-- 8. Behavior -->
 <section class="category" id="behavior">
-  <div class="category-header">
-    <h2>👁️ 8. 사용자 행동 분석</h2>
-    <span class="count">2 도구</span>
-  </div>
-  <p class="category-desc">"몇 명 왔나"가 아니라 "어디서 막혀서 떠났나". 등록만 해두면 매일 데이터가 쌓여요.</p>
+  <div class="category-header"><h2>👁️ 8. 사용자 행동 분석</h2><span class="count">2 도구</span></div>
+  <p class="category-desc">"어디서 막혀서 떠났나". 사이트에 추적 코드 미리 심어둔 경우만.</p>
   <div class="grid">
 
-    <article class="card" data-tags="microsoft clarity behavior heatmap free priority">
+    <article class="card" data-tags="microsoft clarity behavior heatmap free priority" data-tool="clarity">
       <div class="card-head">
-        <h3><a href="https://clarity.microsoft.com/" target="_blank" rel="noopener">Microsoft Clarity</a></h3>
+        <h3><a class="external" href="https://clarity.microsoft.com/" target="_blank" rel="noopener">Microsoft Clarity</a></h3>
         <div class="tags"><span class="tag free">완전 무료</span><span class="tag priority">필수</span></div>
       </div>
       <p class="url">clarity.microsoft.com</p>
-      <p class="purpose">히트맵·세션 녹화. 사용자가 어디서 멈추는지 영상으로 봄. 무료 한도 제한 없음.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>스크롤 깊이 (어디서 떠나나)</li>
-          <li>Dead Click (클릭됐는데 반응 없음)</li>
-          <li>Rage Click (반복 클릭 = 좌절)</li>
-          <li>Session Recording 직접 시청</li>
-        </ul>
-      </div>
+      <p class="purpose">히트맵·세션 녹화. 무료 한도 제한 없음.</p>
     </article>
 
-    <article class="card" data-tags="google analytics ga4 behavior free">
+    <article class="card" data-tags="google analytics ga4 behavior free" data-tool="ga4">
       <div class="card-head">
-        <h3><a href="https://analytics.google.com/" target="_blank" rel="noopener">Google Analytics (GA4)</a></h3>
+        <h3><a class="external" href="https://analytics.google.com/" target="_blank" rel="noopener">Google Analytics (GA4)</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">analytics.google.com</p>
-      <p class="purpose">트래픽·전환·이벤트 분석. Search Console 연동 시 검색어별 성과까지.</p>
+      <p class="purpose">트래픽·전환·이벤트 분석.</p>
     </article>
 
   </div>
 </section>
 
-<!-- 9. Tech SEO / Accessibility -->
+<!-- 9. Tech / Accessibility -->
 <section class="category" id="tech">
-  <div class="category-header">
-    <h2>♿ 9. 접근성·기술 SEO</h2>
-    <span class="count">3 도구</span>
-  </div>
+  <div class="category-header"><h2>♿ 9. 접근성·기술 SEO</h2><span class="count">3 도구</span></div>
   <p class="category-desc">자동 생성 콘텐츠가 많은 사이트일수록 크롤러로 한꺼번에 점검해야 효율적.</p>
   <div class="grid">
 
-    <article class="card" data-tags="wave accessibility free">
+    <article class="card" data-tags="wave accessibility free" data-tool="wave">
       <div class="card-head">
-        <h3><a href="https://wave.webaim.org/" target="_blank" rel="noopener">WAVE Web Accessibility</a></h3>
-        <div class="tags"><span class="tag free">무료</span></div>
+        <h3><a class="external" href="https://wave.webaim.org/" target="_blank" rel="noopener">WAVE Web Accessibility</a></h3>
+        <div class="tags"><span class="tag free">무료</span><span class="tag auto">URL 자동</span></div>
       </div>
       <p class="url">wave.webaim.org</p>
-      <p class="purpose">접근성 문제 자동 점검. 의료·고령자 사이트는 특히 중요.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>색상 대비 (WCAG AA)</li>
-          <li>alt 텍스트 누락</li>
-          <li>ARIA 라벨</li>
-          <li>키보드 탐색 가능성</li>
-        </ul>
+      <p class="purpose">접근성 문제 자동 점검.</p>
+      <div class="checklist"><div class="checklist-title">무엇을 봐야 하나</div><ul>
+        <li>색상 대비 (WCAG AA)</li><li>alt 텍스트 누락</li><li>ARIA 라벨</li>
+      </ul></div>
+      <div class="actions">
+        <a class="tool-link" href="https://wave.webaim.org/" target="_blank" rel="noopener" data-pattern="https://wave.webaim.org/report#/{URL}">도구 열기</a>
+        <button class="copy-btn" onclick="copyUrl()">URL 복사</button>
       </div>
     </article>
 
-    <article class="card" data-tags="screaming frog crawl free">
+    <article class="card" data-tags="screaming frog crawl free" data-tool="screaming-frog">
       <div class="card-head">
-        <h3><a href="https://www.screamingfrog.co.uk/seo-spider/" target="_blank" rel="noopener">Screaming Frog SEO Spider</a></h3>
+        <h3><a class="external" href="https://www.screamingfrog.co.uk/seo-spider/" target="_blank" rel="noopener">Screaming Frog SEO Spider</a></h3>
         <div class="tags"><span class="tag freemium">무료 500 URL</span></div>
       </div>
       <p class="url">screamingfrog.co.uk/seo-spider</p>
-      <p class="purpose">사이트 전체 크롤. 중복 메타·끊긴 링크·alt 누락·title 길이 한꺼번에.</p>
-      <div class="checklist">
-        <div class="checklist-title">무엇을 봐야 하나</div>
-        <ul>
-          <li>404·500 에러</li>
-          <li>중복 H1, 중복 title</li>
-          <li>noindex / canonical 점검</li>
-          <li>리다이렉트 체인</li>
-        </ul>
-      </div>
+      <p class="purpose">사이트 전체 크롤. 데스크탑 앱 다운로드 후 URL 입력.</p>
     </article>
 
-    <article class="card" data-tags="thisvsthat seo concept free">
+    <article class="card" data-tags="thisvsthat seo concept free" data-tool="thisvsthat">
       <div class="card-head">
-        <h3><a href="https://www.thisvsthat.io/" target="_blank" rel="noopener">This vs That</a></h3>
+        <h3><a class="external" href="https://www.thisvsthat.io/" target="_blank" rel="noopener">This vs That</a></h3>
         <div class="tags"><span class="tag free">무료</span></div>
       </div>
       <p class="url">thisvsthat.io</p>
-      <p class="purpose">"noindex vs disallow", "canonical vs 301" 같은 헷갈리는 SEO 개념 비교 사전.</p>
+      <p class="purpose">"noindex vs disallow", "canonical vs 301" 같은 SEO 개념 비교 사전.</p>
     </article>
 
   </div>
@@ -1092,49 +859,32 @@
 
 <!-- 10. AEO Files -->
 <section class="category" id="files">
-  <div class="category-header">
-    <h2>📝 10. AEO 필수 파일 점검</h2>
-    <span class="count">2 항목</span>
-  </div>
-  <p class="category-desc">AEO/GEO 도구들이 공통으로 짚는 두 파일. 사이트 루트에 직접 호스팅.</p>
+  <div class="category-header"><h2>📝 10. AEO 필수 파일 점검</h2><span class="count">2 항목</span></div>
+  <p class="category-desc">위 즉시 분석에 자동 포함됨. 직접 확인은 아래 URL로.</p>
   <div class="grid">
 
-    <article class="card" data-tags="robots ai crawler free priority">
+    <article class="card" data-tags="robots ai crawler free priority" data-tool="robots">
       <div class="card-head">
         <h3>robots.txt — AI 크롤러 허용 여부</h3>
-        <div class="tags"><span class="tag priority">필수</span></div>
+        <div class="tags"><span class="tag priority">필수</span><span class="tag auto">자동 분석</span></div>
       </div>
       <p class="url">{도메인}/robots.txt</p>
       <p class="purpose">GPTBot, ClaudeBot, PerplexityBot, Google-Extended가 차단되면 AI 인용 불가.</p>
-      <div class="checklist">
-        <div class="checklist-title">점검 — Disallow: / 가 걸려 있으면 안 됨</div>
-        <ul>
-          <li>GPTBot (OpenAI)</li>
-          <li>ClaudeBot, anthropic-ai (Anthropic)</li>
-          <li>PerplexityBot (Perplexity)</li>
-          <li>Google-Extended (Gemini)</li>
-          <li>cohere-ai, CCBot</li>
-        </ul>
+      <div class="actions">
+        <a class="tool-link" href="#" target="_blank" rel="noopener" data-pattern="{ORIGIN}/robots.txt">파일 열기</a>
       </div>
-      <p class="note">차단 의도가 없으면 명시적으로 User-agent: GPTBot Allow: / 추가.</p>
     </article>
 
-    <article class="card" data-tags="llms txt aeo geo free priority">
+    <article class="card" data-tags="llms txt aeo geo free priority" data-tool="llms">
       <div class="card-head">
         <h3>llms.txt — AI용 사이트 요약</h3>
-        <div class="tags"><span class="tag priority">권고</span></div>
+        <div class="tags"><span class="tag priority">권고</span><span class="tag auto">자동 분석</span></div>
       </div>
       <p class="url">{도메인}/llms.txt</p>
-      <p class="purpose">사이트 루트에 마크다운 형식으로 "AI가 사이트를 이해하기 쉽게" 정리.</p>
-      <div class="checklist">
-        <div class="checklist-title">기본 형식</div>
-        <ul>
-          <li># 사이트명 + 한 줄 소개</li>
-          <li>## 주요 카테고리 + 대표 URL 목록</li>
-          <li>## 연락처·정책 링크</li>
-        </ul>
+      <p class="purpose">사이트 루트에 마크다운 형식으로 AI가 사이트를 이해하도록 정리.</p>
+      <div class="actions">
+        <a class="tool-link" href="#" target="_blank" rel="noopener" data-pattern="{ORIGIN}/llms.txt">파일 열기</a>
       </div>
-      <p class="note">현재 권고 수준이지만 Anthropic·OpenAI가 점차 참고하는 방향.</p>
     </article>
 
   </div>
@@ -1143,68 +893,117 @@
 <!-- Workflow -->
 <section class="workflow-section" id="workflow">
   <h2>📋 작업 순서 추천</h2>
-  <p>너무 많은 도구를 한 번에 쓰면 오히려 비효율. 시간 절약 순서로:</p>
   <div class="workflow-grid">
-    <div class="workflow-step">
-      <div class="step-num">오늘 30분</div>
-      <h4>Schema 검증</h4>
-      <p>Rich Results Test + Schema.org Validator 두 개로 현재 스키마 통과 여부 확인.</p>
-    </div>
-    <div class="workflow-step">
-      <div class="step-num">이번 주</div>
-      <h4>검색엔진 등록</h4>
-      <p>Google Search Console + Naver Search Advisor 등록, 사이트맵 제출, robots.txt 점검.</p>
-    </div>
-    <div class="workflow-step">
-      <div class="step-num">이번 달</div>
-      <h4>AEO/GEO 베이스라인</h4>
-      <p>AI Rank Lab + Geoptie + AEO/GEO 확장으로 측정 + 스크린샷 기록 (개선 추세 비교용).</p>
-    </div>
-    <div class="workflow-step">
-      <div class="step-num">상시 모니터링</div>
-      <h4>Clarity + GA</h4>
-      <p>Microsoft Clarity, GA4 등록만 해두면 매일 데이터가 쌓임.</p>
-    </div>
-    <div class="workflow-step">
-      <div class="step-num">여유 될 때</div>
-      <h4>속도·llms.txt</h4>
-      <p>PageSpeed Insights로 이미지 점검, llms.txt 작성, Screaming Frog 사이트 크롤.</p>
-    </div>
+    <div class="workflow-step"><div class="step-num">오늘 30분</div><h4>Schema 검증</h4><p>위 즉시 분석 + Rich Results Test + Schema.org Validator.</p></div>
+    <div class="workflow-step"><div class="step-num">이번 주</div><h4>검색엔진 등록</h4><p>GSC + Naver Search Advisor 등록, 사이트맵 제출, robots.txt 점검.</p></div>
+    <div class="workflow-step"><div class="step-num">이번 달</div><h4>AEO/GEO 베이스라인</h4><p>AI Rank Lab + Geoptie + AEO/GEO 확장으로 측정 + 스크린샷 기록.</p></div>
+    <div class="workflow-step"><div class="step-num">상시 모니터링</div><h4>Clarity + GA</h4><p>등록만 해두면 매일 데이터가 쌓임.</p></div>
+    <div class="workflow-step"><div class="step-num">여유 될 때</div><h4>속도·llms.txt</h4><p>PageSpeed Insights로 이미지 점검, llms.txt 작성, Screaming Frog 사이트 크롤.</p></div>
   </div>
 </section>
 
 </main>
 
-<!-- Modal for Comprehensive Analysis preview -->
-<div class="modal-overlay" id="ca-modal" onclick="if(event.target===this)closeAnalyzeModal()">
-  <div class="modal">
-    <button class="close-btn" onclick="closeAnalyzeModal()">×</button>
-    <h3>🚀 종합 분석 — 개발 로드맵</h3>
-    <p style="color:var(--text-dim);font-size:14px;">입력하신 URL: <code id="ca-modal-url"></code></p>
-    <p>현재 종합 분석 웹앱은 <strong>컨셉 단계</strong>예요. 아래 스택으로 별도 프로젝트(<code>analyzer/</code>) 개발 예정:</p>
-    <pre>analyzer/
-├── frontend/        Next.js + Tailwind (Vercel 무료)
-├── api/             Vercel Serverless Functions
-│   ├── psi          Google PageSpeed Insights API
-│   ├── schema       JSON-LD 추출 + 검증
-│   ├── robots       robots.txt 파싱 + AI 크롤러 점검
-│   ├── llms         llms.txt 존재 + 형식 검증
-│   ├── meta         OG/Twitter Card/canonical/viewport
-│   └── claude       Claude API 종합 보고서 생성
-└── README.md</pre>
-    <p style="font-size:13px;color:var(--text-dim);margin-top:16px;">
-      <strong>준비물:</strong> Google PSI API 키(무료), Claude API 키(BYOK), Vercel 계정.<br>
-      <strong>예상 산출물:</strong> 100점 만점 종합 점수, 카테고리별 점수, "우선 고쳐야 할 3가지" 자연어 리포트.
-    </p>
-    <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">현재는 위 카탈로그의 도구들을 직접 돌려주세요. 종합 분석 웹앱이 준비되면 이 페이지 상단 메뉴가 활성화됩니다.</p>
-  </div>
-</div>
+<div class="toast" id="toast">복사됨</div>
 
 <footer>
-  웹페이지 분석 도구 카탈로그 · 모든 외부 링크는 새 탭에서 열림 · MIT License
+  웹페이지 분석 도구 카탈로그 · 모든 외부 링크는 새 탭에서 열림 · MIT License<br>
+  <small>즉시 분석은 공용 CORS 프록시(corsproxy.io 등)와 Google PSI API에 의존합니다. LLM API는 사용하지 않음.</small>
 </footer>
 
 <script>
+/* ========== Settings ========== */
+const STORAGE_KEY = 'webpage-evaluator-settings';
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (s.psiKey) document.getElementById('psi-key').value = s.psiKey;
+    if (s.url) document.getElementById('target-url').value = s.url;
+    if (s.proxy) document.getElementById('cors-proxy').value = s.proxy;
+    return s;
+  } catch(e) { return {}; }
+}
+function saveSettings() {
+  const s = {
+    psiKey: document.getElementById('psi-key').value.trim(),
+    url: document.getElementById('target-url').value.trim(),
+    proxy: document.getElementById('cors-proxy').value
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  showToast('설정 저장됨');
+}
+function getSettings() {
+  return {
+    psiKey: document.getElementById('psi-key').value.trim(),
+    url: document.getElementById('target-url').value.trim(),
+    proxy: document.getElementById('cors-proxy').value
+  };
+}
+function getProxy() { return document.getElementById('cors-proxy').value; }
+
+/* ========== URL Bar ========== */
+function getTargetUrl() {
+  let url = document.getElementById('target-url').value.trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  try { return new URL(url).href; } catch { return null; }
+}
+function clearUrl() {
+  document.getElementById('target-url').value = '';
+  updateAllToolLinks();
+  document.getElementById('url-status').textContent = 'URL을 입력하면 모든 외부 도구 링크가 자동 갱신됩니다.';
+  document.getElementById('url-status').classList.remove('active');
+}
+document.getElementById('target-url').addEventListener('input', updateAllToolLinks);
+
+function updateAllToolLinks() {
+  const url = getTargetUrl();
+  const status = document.getElementById('url-status');
+  if (!url) {
+    document.querySelectorAll('a.tool-link[data-pattern]').forEach(a => {
+      a.href = a.getAttribute('data-pattern').replace(/\{URL\}.*$/,'').replace(/\?$/,'').replace(/#.*$/,'').replace(/\/\{ORIGIN\}.*/,'');
+    });
+    return;
+  }
+  let origin = '';
+  try { origin = new URL(url).origin; } catch {}
+  let count = 0;
+  document.querySelectorAll('a.tool-link[data-pattern]').forEach(a => {
+    let pattern = a.getAttribute('data-pattern');
+    let href = pattern
+      .replace(/\{URL\}/g, encodeURIComponent(url))
+      .replace(/\{URL_RAW\}/g, url)
+      .replace(/\{ORIGIN\}/g, origin);
+    a.href = href;
+    count++;
+  });
+  // Special: WAVE uses raw URL (not encoded) after #/
+  document.querySelectorAll('a.tool-link[data-pattern*="wave.webaim.org"]').forEach(a => {
+    a.href = 'https://wave.webaim.org/report#/' + url;
+  });
+  // Classy: uses /Visualisation?url=
+  document.querySelectorAll('a.tool-link[data-pattern*="classyschema.org"]').forEach(a => {
+    a.href = 'https://classyschema.org/Visualisation?url=' + encodeURIComponent(url);
+  });
+  status.textContent = `✓ ${count}개 도구 링크가 ${url} 로 자동 전달되도록 갱신됨`;
+  status.classList.add('active');
+  saveSettings();
+}
+
+function copyUrl() {
+  const url = getTargetUrl();
+  if (!url) { showToast('URL을 먼저 입력하세요'); return; }
+  navigator.clipboard.writeText(url).then(() => showToast('URL 복사됨: ' + url));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ========== Filter ========== */
 function filterCards() {
   const q = document.getElementById('search').value.toLowerCase().trim();
   document.querySelectorAll('.card').forEach(card => {
@@ -1213,30 +1012,338 @@ function filterCards() {
     const match = !q || tags.includes(q) || text.includes(q);
     card.style.display = match ? '' : 'none';
   });
-  // Hide empty categories
   document.querySelectorAll('.category').forEach(cat => {
     const visible = cat.querySelectorAll('.card:not([style*="none"])').length;
     cat.style.display = visible === 0 && q ? 'none' : '';
   });
 }
 
-function openAnalyzeModal() {
-  const url = document.getElementById('ca-url').value.trim() || '(URL 미입력)';
-  document.getElementById('ca-modal-url').textContent = url;
-  document.getElementById('ca-modal').classList.add('show');
-}
-function closeAnalyzeModal() {
-  document.getElementById('ca-modal').classList.remove('show');
+/* ========== Diagnostics ========== */
+async function fetchViaProxy(url, timeout=15000) {
+  const proxy = getProxy();
+  let proxyUrl;
+  if (proxy.includes('allorigins')) proxyUrl = proxy + encodeURIComponent(url);
+  else if (proxy.includes('codetabs')) proxyUrl = proxy + encodeURIComponent(url);
+  else proxyUrl = proxy + encodeURIComponent(url);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const r = await fetch(proxyUrl, { signal: ctrl.signal });
+    clearTimeout(t);
+    return { ok: r.ok, status: r.status, text: await r.text() };
+  } catch(e) {
+    clearTimeout(t);
+    return { ok: false, error: e.message };
+  }
 }
 
-// Smooth scroll for nav
+function setCard(id, status, detail, level='good') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('good','warn','bad','pending');
+  el.classList.add(level);
+  el.querySelector('.qd-status').textContent = status;
+  el.querySelector('.qd-detail').innerHTML = detail;
+}
+
+function appendRaw(label, content) {
+  const out = document.getElementById('qd-raw');
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `<span class="key">${label}:</span> ${content}`;
+  out.appendChild(row);
+}
+
+async function runDiagnostics() {
+  const url = getTargetUrl();
+  if (!url) { showToast('URL을 먼저 입력하세요'); return; }
+  saveSettings();
+
+  // Reset
+  document.getElementById('qd-summary').style.display = '';
+  document.getElementById('qd-raw').innerHTML = '';
+  ['qd-html','qd-schema','qd-meta','qd-canonical','qd-mobile','qd-headings','qd-images','qd-links','qd-robots','qd-llms','qd-sitemap','qd-faq','qd-https','qd-psi-mobile','qd-psi-desktop','qd-naver'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('good','warn','bad');
+    el.classList.add('pending');
+    el.querySelector('.qd-status').textContent = '⏳';
+    el.querySelector('.qd-detail').textContent = '분석중...';
+  });
+
+  appendRaw('TARGET', url);
+  const origin = new URL(url).origin;
+  let scores = { schema:0, meta:0, aeo:0, perf:0, a11y:0 };
+  let weights = { schema:0, meta:0, aeo:0, perf:0, a11y:0 };
+
+  // HTTPS check (synchronous)
+  if (url.startsWith('https://')) {
+    setCard('qd-https', '✓', 'HTTPS 사용', 'good');
+    scores.meta += 1; weights.meta += 1;
+  } else {
+    setCard('qd-https', '✗', 'HTTP만 사용 — HTTPS로 마이그레이션 필요', 'bad');
+    weights.meta += 1;
+  }
+
+  // Fetch all in parallel
+  const [htmlRes, robotsRes, llmsRes, sitemapRes] = await Promise.all([
+    fetchViaProxy(url),
+    fetchViaProxy(origin + '/robots.txt'),
+    fetchViaProxy(origin + '/llms.txt'),
+    fetchViaProxy(origin + '/sitemap.xml')
+  ]);
+
+  // ========== HTML ==========
+  if (!htmlRes.ok) {
+    setCard('qd-html', '✗', 'HTML fetch 실패: ' + (htmlRes.error || htmlRes.status) + ' (CORS 프록시 변경 시도)', 'bad');
+    appendRaw('HTML', '<span class="ng">FAILED</span>');
+  } else {
+    const html = htmlRes.text;
+    setCard('qd-html', '✓', `${(html.length/1024).toFixed(1)} KB 가져옴`, 'good');
+    appendRaw('HTML SIZE', `${html.length} bytes`);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Schema
+    const ldScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+    if (ldScripts.length === 0) {
+      setCard('qd-schema', '✗', 'JSON-LD 스키마 없음', 'bad');
+      weights.schema += 3;
+    } else {
+      const types = [];
+      let valid = 0, errors = 0;
+      ldScripts.forEach(s => {
+        try {
+          const json = JSON.parse(s.textContent);
+          const arr = Array.isArray(json) ? json : (json['@graph'] ? json['@graph'] : [json]);
+          arr.forEach(item => { if (item['@type']) types.push(Array.isArray(item['@type'])?item['@type'].join(','):item['@type']); });
+          valid++;
+        } catch(e) { errors++; }
+      });
+      const lvl = errors > 0 ? 'warn' : 'good';
+      const detail = `${ldScripts.length}개 블록 (${valid} valid, ${errors} parse error). 타입: ${[...new Set(types)].slice(0,5).join(', ') || '?'}`;
+      setCard('qd-schema', errors>0?'△':'✓', detail, lvl);
+      appendRaw('JSON-LD TYPES', [...new Set(types)].join(', '));
+      scores.schema += errors === 0 ? 3 : 1.5; weights.schema += 3;
+    }
+
+    // Meta / OG
+    const title = doc.querySelector('title')?.textContent?.trim() || '';
+    const desc = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    const og = ['og:title','og:description','og:image','og:type','og:url'].map(p => !!doc.querySelector(`meta[property="${p}"]`));
+    const tw = ['twitter:card','twitter:title','twitter:description','twitter:image'].map(p => !!doc.querySelector(`meta[name="${p}"]`));
+    const ogPass = og.filter(Boolean).length;
+    const twPass = tw.filter(Boolean).length;
+    let metaIssues = [];
+    if (!title) metaIssues.push('title 없음');
+    else if (title.length > 60) metaIssues.push(`title 길이 ${title.length} (60 권장 이하)`);
+    else if (title.length < 20) metaIssues.push(`title 짧음 ${title.length}`);
+    if (!desc) metaIssues.push('description 없음');
+    else if (desc.length > 160) metaIssues.push(`description 길이 ${desc.length} (160 권장 이하)`);
+    if (ogPass < 4) metaIssues.push(`OG 부족 (${ogPass}/5)`);
+    if (twPass < 2) metaIssues.push(`Twitter Card 부족 (${twPass}/4)`);
+    const metaLvl = metaIssues.length === 0 ? 'good' : (metaIssues.length <= 2 ? 'warn' : 'bad');
+    setCard('qd-meta', metaIssues.length===0?'✓':'△', metaIssues.length===0 ? `Title ${title.length}, Desc ${desc.length}, OG ${ogPass}/5, TW ${twPass}/4` : metaIssues.join(' · '), metaLvl);
+    appendRaw('TITLE', title.replace(/[<>]/g,''));
+    appendRaw('DESC', desc.replace(/[<>]/g,''));
+    scores.meta += Math.max(0, 4 - metaIssues.length); weights.meta += 4;
+
+    // Canonical / Hreflang
+    const canonical = doc.querySelector('link[rel="canonical"]')?.getAttribute('href') || '';
+    const hreflangs = doc.querySelectorAll('link[rel="alternate"][hreflang]').length;
+    if (!canonical) {
+      setCard('qd-canonical', '△', 'canonical 없음', 'warn');
+      weights.meta += 1;
+    } else {
+      setCard('qd-canonical', '✓', `canonical: ${canonical.slice(0,50)}${canonical.length>50?'...':''} · hreflang: ${hreflangs}`, 'good');
+      scores.meta += 1; weights.meta += 1;
+    }
+
+    // Mobile viewport
+    const vp = doc.querySelector('meta[name="viewport"]')?.getAttribute('content') || '';
+    if (vp.includes('width=device-width')) {
+      setCard('qd-mobile', '✓', vp, 'good');
+      scores.meta += 1; weights.meta += 1;
+    } else {
+      setCard('qd-mobile', '✗', 'viewport 미설정 또는 부적절', 'bad');
+      weights.meta += 1;
+    }
+
+    // Headings
+    const h1 = doc.querySelectorAll('h1').length;
+    const h2 = doc.querySelectorAll('h2').length;
+    const h3 = doc.querySelectorAll('h3').length;
+    let hlvl = 'good', hmsg = `H1: ${h1}, H2: ${h2}, H3: ${h3}`;
+    if (h1 === 0) { hlvl = 'bad'; hmsg = 'H1 없음 — ' + hmsg; }
+    else if (h1 > 1) { hlvl = 'warn'; hmsg = `H1 ${h1}개 (1개 권장) — ` + hmsg; }
+    setCard('qd-headings', h1===1?'✓':'△', hmsg, hlvl);
+    if (h1 === 1) { scores.meta += 1; } weights.meta += 1;
+
+    // Images
+    const imgs = doc.querySelectorAll('img');
+    const noAlt = [...imgs].filter(i => !i.getAttribute('alt')).length;
+    const lazyImgs = [...imgs].filter(i => i.getAttribute('loading') === 'lazy').length;
+    let imgLvl = 'good';
+    if (imgs.length > 0 && noAlt / imgs.length > 0.2) imgLvl = 'warn';
+    if (imgs.length > 0 && noAlt / imgs.length > 0.5) imgLvl = 'bad';
+    setCard('qd-images', imgs.length===0?'—':(noAlt===0?'✓':'△'),
+      imgs.length === 0 ? '이미지 없음' : `${imgs.length}개 중 alt 누락 ${noAlt}, lazy ${lazyImgs}`,
+      imgLvl);
+    if (imgs.length === 0 || noAlt === 0) { scores.a11y += 2; }
+    else if (noAlt / imgs.length < 0.2) { scores.a11y += 1; }
+    weights.a11y += 2;
+
+    // Links
+    const allLinks = doc.querySelectorAll('a[href]');
+    let internal = 0, external = 0;
+    allLinks.forEach(a => {
+      const h = a.getAttribute('href') || '';
+      if (h.startsWith('#') || h.startsWith('/') || h.includes(origin) || (!h.startsWith('http') && !h.startsWith('//'))) internal++;
+      else external++;
+    });
+    setCard('qd-links', '✓', `링크 ${allLinks.length}개 (내부 ${internal}, 외부 ${external})`, 'good');
+    appendRaw('LINKS', `internal=${internal}, external=${external}`);
+
+    // FAQ / Q&A schema
+    const hasFaq = html.includes('"FAQPage"') || html.includes('"QAPage"') || html.includes('"Question"');
+    if (hasFaq) {
+      setCard('qd-faq', '✓', 'FAQ/Q&A 스키마 감지됨', 'good');
+      scores.aeo += 2; weights.aeo += 2;
+    } else {
+      const qWords = (html.match(/[\?？]/g) || []).length;
+      if (qWords > 5) {
+        setCard('qd-faq', '△', `질문 패턴 ${qWords}개 — FAQ 스키마 추가 권장`, 'warn');
+        scores.aeo += 1;
+      } else {
+        setCard('qd-faq', '—', 'Q&A 구조 없음', 'warn');
+      }
+      weights.aeo += 2;
+    }
+
+    // Naver SEO heuristics
+    const naverIssues = [];
+    if (!doc.querySelector('link[rel="alternate"][type="application/rss+xml"]')) naverIssues.push('RSS 링크 없음');
+    if (!html.includes('property="og:')) naverIssues.push('OG 누락');
+    const lang = doc.documentElement.getAttribute('lang') || '';
+    if (!lang) naverIssues.push('html lang 없음');
+    setCard('qd-naver', naverIssues.length===0?'✓':'△',
+      naverIssues.length===0 ? `lang=${lang}, RSS·OG 모두 OK` : naverIssues.join(', '),
+      naverIssues.length === 0 ? 'good' : (naverIssues.length <= 1 ? 'warn' : 'bad'));
+    if (naverIssues.length === 0) { scores.meta += 1; } weights.meta += 1;
+  }
+
+  // ========== robots.txt ==========
+  const aiBots = ['GPTBot','ClaudeBot','anthropic-ai','PerplexityBot','Google-Extended','CCBot','cohere-ai','Bytespider'];
+  if (!robotsRes.ok || (robotsRes.text && robotsRes.text.length < 5)) {
+    setCard('qd-robots', '—', 'robots.txt 없음 (모든 크롤러 허용)', 'good');
+    scores.aeo += 3; weights.aeo += 3;
+    appendRaw('ROBOTS', 'NOT FOUND (default allow)');
+  } else {
+    const txt = robotsRes.text;
+    const blocked = [];
+    aiBots.forEach(bot => {
+      const re = new RegExp(`User-agent:\\s*${bot}[\\s\\S]*?Disallow:\\s*\\/`, 'i');
+      if (re.test(txt)) blocked.push(bot);
+    });
+    const allBlocked = /User-agent:\s*\*[\s\S]*?Disallow:\s*\/\s*$/im.test(txt);
+    if (blocked.length === 0 && !allBlocked) {
+      setCard('qd-robots', '✓', `${aiBots.length}개 AI 봇 모두 허용`, 'good');
+      scores.aeo += 3;
+    } else {
+      setCard('qd-robots', '✗', `차단됨: ${blocked.join(', ') || 'all (User-agent: *)'}`, 'bad');
+    }
+    weights.aeo += 3;
+    appendRaw('ROBOTS', `${txt.length} bytes, blocked AI: ${blocked.join(',') || 'none'}`);
+  }
+
+  // ========== llms.txt ==========
+  if (llmsRes.ok && llmsRes.text && llmsRes.text.length > 20 && !llmsRes.text.includes('<html')) {
+    const lines = llmsRes.text.split('\n').filter(l => l.trim());
+    const hasH1 = lines.some(l => l.startsWith('# '));
+    setCard('qd-llms', '✓', `${llmsRes.text.length} bytes, ${lines.length}줄, H1 ${hasH1?'있음':'없음'}`, hasH1?'good':'warn');
+    scores.aeo += hasH1 ? 2 : 1;
+  } else {
+    setCard('qd-llms', '—', 'llms.txt 없음 — 작성 권장', 'warn');
+  }
+  weights.aeo += 2;
+
+  // ========== sitemap.xml ==========
+  if (sitemapRes.ok && sitemapRes.text && (sitemapRes.text.includes('<urlset') || sitemapRes.text.includes('<sitemapindex'))) {
+    const urlCount = (sitemapRes.text.match(/<loc>/g) || []).length;
+    setCard('qd-sitemap', '✓', `${urlCount}개 URL 등록`, 'good');
+    scores.meta += 1;
+  } else {
+    setCard('qd-sitemap', '✗', 'sitemap.xml 없음', 'bad');
+  }
+  weights.meta += 1;
+
+  // ========== PSI API ==========
+  const psiKey = document.getElementById('psi-key').value.trim();
+  if (psiKey) {
+    const psiPromises = ['mobile','desktop'].map(strategy =>
+      fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${psiKey}&strategy=${strategy}&category=performance`)
+        .then(r => r.json())
+        .then(d => ({ strategy, data: d }))
+        .catch(e => ({ strategy, error: e.message }))
+    );
+    const [mobile, desktop] = await Promise.all(psiPromises);
+    [mobile, desktop].forEach(({strategy, data, error}) => {
+      const id = strategy === 'mobile' ? 'qd-psi-mobile' : 'qd-psi-desktop';
+      if (error || !data || data.error) {
+        setCard(id, '✗', 'PSI 실패: ' + (error || data?.error?.message || 'unknown'), 'bad');
+        return;
+      }
+      const lh = data.lighthouseResult;
+      const perf = Math.round((lh?.categories?.performance?.score || 0) * 100);
+      const lcp = lh?.audits?.['largest-contentful-paint']?.displayValue || '?';
+      const cls = lh?.audits?.['cumulative-layout-shift']?.displayValue || '?';
+      const inp = lh?.audits?.['interaction-to-next-paint']?.displayValue || lh?.audits?.['interactive']?.displayValue || '?';
+      const lvl = perf >= 90 ? 'good' : (perf >= 50 ? 'warn' : 'bad');
+      setCard(id, perf+'점', `LCP ${lcp} · CLS ${cls} · INP ${inp}`, lvl);
+      if (strategy === 'mobile') { scores.perf += perf/100*4; weights.perf += 4; }
+      else { scores.perf += perf/100*2; weights.perf += 2; }
+    });
+  } else {
+    setCard('qd-psi-mobile', '—', 'PSI API 키 미입력 (고급 설정에서 입력)', 'warn');
+    setCard('qd-psi-desktop', '—', 'PSI API 키 미입력', 'warn');
+  }
+
+  // ========== Final Scores ==========
+  function pct(s, w) { return w === 0 ? '—' : Math.round((s/w)*100); }
+  function setScore(id, val) {
+    const el = document.getElementById(id);
+    el.textContent = val === '—' ? '—' : val + '점';
+    el.classList.remove('good','warn','bad');
+    if (val !== '—') {
+      el.classList.add(val >= 80 ? 'good' : (val >= 50 ? 'warn' : 'bad'));
+    }
+  }
+  const sSchema = pct(scores.schema, weights.schema);
+  const sMeta = pct(scores.meta, weights.meta);
+  const sAeo = pct(scores.aeo, weights.aeo);
+  const sPerf = pct(scores.perf, weights.perf);
+  const sA11y = pct(scores.a11y, weights.a11y);
+  setScore('score-schema', sSchema);
+  setScore('score-meta', sMeta);
+  setScore('score-aeo', sAeo);
+  setScore('score-perf', sPerf);
+  setScore('score-a11y', sA11y);
+  const totalScores = [sSchema, sMeta, sAeo, sPerf, sA11y].filter(s => s !== '—');
+  const total = totalScores.length === 0 ? '—' : Math.round(totalScores.reduce((a,b)=>a+b,0)/totalScores.length);
+  setScore('score-total', total);
+
+  appendRaw('FINAL', `Schema=${sSchema} Meta=${sMeta} AEO=${sAeo} Perf=${sPerf} A11y=${sA11y} → Total=${total}`);
+  showToast('분석 완료');
+}
+
+/* ========== Init ========== */
+loadSettings();
+updateAllToolLinks();
+
+// Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     const target = document.querySelector(a.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   });
 });
 </script>
