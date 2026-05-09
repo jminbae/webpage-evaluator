@@ -10,25 +10,68 @@ let lastAnalysis = null;
 
 // ========== Init ==========
 document.addEventListener('DOMContentLoaded', async () => {
-  // Get current tab
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  currentTab = tab;
-  currentUrl = tab?.url;
-
-  if (!currentUrl || currentUrl.startsWith('chrome://') || currentUrl.startsWith('chrome-extension://') || currentUrl.startsWith('edge://')) {
-    document.getElementById('current-url').textContent = '브라우저 내부 페이지 — 분석 불가';
-    document.body.classList.add('loading');
-    return;
-  }
-
-  document.getElementById('current-url').textContent = currentUrl;
-  updateToolLinks();
   setupTabs();
   setupActions();
-
-  // Start analysis
-  runAnalysis();
+  setupTabChangeListeners();
+  await refreshCurrentTab({ autoAnalyze: true });
 });
+
+function isAnalyzableUrl(url) {
+  if (!url) return false;
+  if (url.startsWith('chrome://')) return false;
+  if (url.startsWith('chrome-extension://')) return false;
+  if (url.startsWith('edge://')) return false;
+  if (url.startsWith('about:')) return false;
+  if (url.startsWith('view-source:')) return false;
+  if (url === 'chrome://newtab/' || url === 'about:blank') return false;
+  return /^https?:\/\//i.test(url);
+}
+
+// Re-query the active tab and update UI. Returns true if URL is analyzable.
+async function refreshCurrentTab({ autoAnalyze = false } = {}) {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    currentTab = tab;
+    currentUrl = tab?.url;
+  } catch (e) {
+    currentTab = null;
+    currentUrl = null;
+  }
+
+  const urlEl = document.getElementById('current-url');
+  if (!isAnalyzableUrl(currentUrl)) {
+    urlEl.textContent = currentUrl
+      ? '분석 불가 페이지: ' + currentUrl
+      : '활성 탭을 찾을 수 없음';
+    urlEl.title = currentUrl || '';
+    document.body.classList.add('loading');
+    return false;
+  }
+
+  urlEl.textContent = currentUrl;
+  urlEl.title = currentUrl;
+  document.body.classList.remove('loading');
+  updateToolLinks();
+  if (autoAnalyze) runAnalysis();
+  return true;
+}
+
+function setupTabChangeListeners() {
+  // When user switches active tab in browser, refresh side panel URL display
+  if (chrome.tabs?.onActivated) {
+    chrome.tabs.onActivated.addListener(async () => {
+      await refreshCurrentTab({ autoAnalyze: false });
+    });
+  }
+  // When the active tab navigates to a new URL, refresh display
+  if (chrome.tabs?.onUpdated) {
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+      if (tab.active && changeInfo.url) {
+        await refreshCurrentTab({ autoAnalyze: false });
+      }
+    });
+  }
+}
 
 // ========== Tab switching ==========
 function setupTabs() {
@@ -43,7 +86,12 @@ function setupTabs() {
 }
 
 function setupActions() {
-  document.getElementById('btn-rerun').addEventListener('click', runAnalysis);
+  document.getElementById('btn-rerun').addEventListener('click', async () => {
+    // Always re-query the active tab when user clicks 분석 (covers the case
+    // where panel was opened on chrome:// page and user switched to a real page)
+    const ok = await refreshCurrentTab({ autoAnalyze: false });
+    if (ok) runAnalysis();
+  });
   document.getElementById('btn-options').addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
   });
