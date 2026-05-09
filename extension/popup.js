@@ -924,16 +924,31 @@ function renderSiteAggregate(parsed, result) {
   if (summaryEl) {
     const allGroups = groupReport.filter(g => g.mode === 'all').length;
     const sampleGroups = groupReport.filter(g => g.mode === 'sample').length;
+    const isSpaLike = sitemapTotal <= 2 && total <= 2;
+    const guessAdded = result.guessAdded || 0;
+
+    let warningHtml = '';
+    if (isSpaLike) {
+      warningHtml = `
+        <div style="margin-top:8px;padding:8px 10px;background:rgba(245,158,11,0.1);border-left:3px solid var(--warn);border-radius:4px;font-size:11px;color:var(--text-dim);line-height:1.5;">
+          이 사이트는 <strong style="color:var(--warn);">SPA</strong>이거나 sitemap이 없는 듯합니다.
+          모든 콘텐츠가 한 URL에서 JS 라우팅으로 처리되면 (예: <code>/?idx=xxx</code>) 개별 페이지를 외부에서 크롤링할 수 없어요.
+          → sitemap.xml 작성 또는 SSR(서버사이드 렌더링) 도입 권장.
+        </div>
+      `;
+    }
+
     summaryEl.innerHTML = `
       <div style="font-size:15px;font-weight:700;margin-bottom:6px;">
         총 <span style="color:var(--accent);">${total}</span>개 페이지 분석 완료
         <span style="color:var(--text-muted);font-size:12px;font-weight:400;">(${parsed.length}개 시도 중 성공)</span>
       </div>
       <div style="font-size:12px;color:var(--text-dim);line-height:1.6;">
-        사이트맵: ${sitemapTotal > 0 ? `${sitemapTotal}개 URL 발견` : '없음 — 추정 경로 사용'}<br>
+        사이트맵: ${sitemapTotal > 0 ? `${sitemapTotal}개 URL 발견` : '없음'}${guessAdded > 0 ? ` · 추정 경로 ${guessAdded}개 추가 시도` : ''}<br>
         About 계열 전수 분석: <strong style="color:var(--text);">${aboutCount}</strong>개<br>
         URL 그룹: 전수 ${allGroups}개 · 샘플링 ${sampleGroups}개
       </div>
+      ${warningHtml}
     `;
   }
 

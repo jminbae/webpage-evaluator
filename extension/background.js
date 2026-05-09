@@ -157,13 +157,24 @@ async function handleSiteSelectUrls(origin) {
   aboutUrls.forEach(add);
   const aboutCount = aboutUrls.length;
 
-  // 3. Common about paths even if not in sitemap
-  ['/about', '/about-us', '/team', '/company', '/contact'].forEach(p => {
-    if (!seen.has(origin + p) && !seen.has(origin + p + '/')) {
-      // Only add if sitemap is empty (avoid 404s on sites that have proper sitemap)
-      if (allUrls.length === 0) add(origin + p);
-    }
-  });
+  // 3. Common about-like guess paths — fallback when sitemap is missing/sparse
+  // Many SPAs (Imweb, Wix, Cafe24) only register root URL in sitemap.
+  // 404s become failed entries in the page list — not fatal.
+  const sitemapWasUseful = allUrls.length >= 3;
+  const guessPaths = [
+    '/about', '/about-us', '/aboutus',
+    '/team', '/staff', '/doctors', '/doctor', '/profile',
+    '/company', '/contact', '/contact-us',
+    '/소개', '/회사소개', '/의료진', '/진료진', '/오시는길'
+  ];
+  let guessAdded = 0;
+  if (!sitemapWasUseful) {
+    guessPaths.forEach(p => {
+      const before = selected.length;
+      add(origin + p);
+      if (selected.length > before) guessAdded++;
+    });
+  }
 
   // 4. Group remaining (non-about) URLs by first path segment
   const remaining = allUrls.filter(u => !seen.has(u));
@@ -206,6 +217,8 @@ async function handleSiteSelectUrls(origin) {
     sitemapFound: sitemapRes.ok && allUrls.length > 0,
     sitemapUrlCount: allUrls.length,
     aboutCount,
+    guessAdded,
+    sitemapWasUseful,
     urls: finalList,
     groupReport
   };
