@@ -77,34 +77,41 @@
     white-space: nowrap;
   }
   .btn:hover { opacity: 0.9; }
-  .btn-secondary {
+  .btn-analyze {
     background: var(--bg-card);
-    color: var(--text-dim);
-    border: 1px solid var(--border);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    padding: 6px 14px;
   }
-  .btn-secondary:hover { color: var(--text); }
-  body.loading .btn-primary { opacity: 0.5; pointer-events: none; }
-  body.analyzing .btn-primary, body.analyzing .btn-secondary { opacity: 0.6; pointer-events: none; }
+  .btn-analyze:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: 1;
+  }
+  body.loading .btn-analyze { opacity: 0.5; pointer-events: none; }
+  body.analyzing .btn-analyze { opacity: 0.5; pointer-events: none; }
 
   .status-bar {
     display: flex !important;
     align-items: center;
     gap: 8px;
     padding: 6px 10px;
-    background: linear-gradient(90deg, rgba(99,102,241,0.18), rgba(139,92,246,0.10));
-    border: 1px solid rgba(99,102,241,0.35);
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
     font-size: 12px;
-    color: var(--text);
+    color: var(--text-dim);
     font-weight: 500;
   }
   .status-bar.done {
-    background: linear-gradient(90deg, rgba(16,185,129,0.18), rgba(16,185,129,0.05));
-    border-color: rgba(16,185,129,0.4);
+    background: var(--bg-card);
+    border-color: rgba(16,185,129,0.45);
+    color: var(--text);
   }
   .status-bar.error {
-    background: linear-gradient(90deg, rgba(239,68,68,0.18), rgba(239,68,68,0.05));
-    border-color: rgba(239,68,68,0.4);
+    background: var(--bg-card);
+    border-color: rgba(239,68,68,0.45);
+    color: var(--text);
   }
   .status-bar[style*="display:none"] { display: none !important; }
   .status-bar[style*="display: none"] { display: none !important; }
@@ -280,9 +287,8 @@
     background: var(--bg-deep);
     border-radius: 4px;
     padding: 6px 8px;
-    max-height: 90px;
-    overflow-y: auto;
     word-break: break-all;
+    white-space: pre-wrap;
   }
 
   /* Tools panel */
@@ -443,11 +449,7 @@
 <div class="header">
   <div class="header-row1">
     <div class="url" id="current-url" title="">로딩...</div>
-    <div class="actions">
-      <button class="btn btn-secondary" id="btn-options" title="설정">⚙️</button>
-      <button class="btn btn-secondary" id="btn-site" title="사이트 전체 분석">사이트</button>
-      <button class="btn btn-primary" id="btn-rerun">분석</button>
-    </div>
+    <button class="btn btn-analyze" id="btn-rerun" title="페이지 + 사이트 분석">분석</button>
   </div>
   <div class="status-bar" id="status-bar" style="display:none;">
     <span class="status-spinner"></span>
@@ -467,7 +469,7 @@
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="diag">진단</div>
+    <div class="tab active" data-tab="diag">페이지</div>
     <div class="tab" data-tab="site">사이트</div>
     <div class="tab" data-tab="tools">도구</div>
     <div class="tab" data-tab="keywords">키워드</div>
@@ -500,13 +502,16 @@
   <!-- Site tab -->
   <div class="tab-panel" data-panel="site">
     <div id="site-empty" style="text-align:center;padding:32px 16px;color:var(--text-muted);font-size:13px;">
-      <div style="font-size:28px;margin-bottom:10px;">🏠</div>
-      <p style="margin:0 0 6px;">상단 <strong>🏠 사이트</strong> 버튼을 누르면 sitemap에서 메인·About·Author·대표 페이지를 자동으로 샘플링해 사이트 차원 신호를 종합합니다.</p>
-      <p style="margin:8px 0 0;font-size:11px;">최대 10개 페이지를 동시 분석. 사이트 크기에 따라 5~20초 소요.</p>
+      <p style="margin:0 0 6px;">사이트 분석 대기중...</p>
+      <p style="margin:8px 0 0;font-size:11px;">sitemap에서 메인·About·Author·대표 페이지를 자동 선정해 사이트 차원 신호를 종합합니다.</p>
     </div>
 
     <div id="site-results" style="display:none;">
-      <h3 style="font-size:14px;margin:0 0 8px;">📊 사이트 차원 종합</h3>
+      <div id="site-summary" style="margin-bottom:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);">
+        분석 결과 대기중...
+      </div>
+
+      <h3 style="font-size:14px;margin:0 0 8px;">사이트 차원 종합</h3>
       <div class="grid">
         <div class="card pending" id="ds-pages"><h4>분석 페이지 수 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
         <div class="card pending" id="ds-author"><h4>저자 정보 커버리지 <span class="status">⏳</span></h4><p class="detail">대기</p></div>
@@ -517,7 +522,7 @@
         <div class="card pending" id="ds-knowledge-graph"><h4>외부 신뢰 연결 (sameAs) <span class="status">⏳</span></h4><p class="detail">대기</p></div>
       </div>
 
-      <h3 style="font-size:14px;margin:18px 0 8px;">🔗 분석한 페이지</h3>
+      <h3 style="font-size:14px;margin:18px 0 8px;">분석한 페이지</h3>
       <div id="site-pages-list" style="font-size:12px;"></div>
     </div>
   </div>
@@ -525,53 +530,53 @@
   <!-- Tools tab -->
   <div class="tab-panel" data-panel="tools">
     <div class="tools-grid" id="tools-grid">
-      <div class="group-title">🏗 Schema</div>
+      <div class="group-title">Schema</div>
       <a class="tool-link auto" target="_blank" data-pat="https://search.google.com/test/rich-results?url={URL_E}"><span class="tool-name">Google Rich Results Test</span><span class="tool-tag">URL 자동</span></a>
       <a class="tool-link auto" target="_blank" data-pat="https://validator.schema.org/#url={URL_E}"><span class="tool-name">Schema.org Validator</span><span class="tool-tag">URL 자동</span></a>
       <a class="tool-link auto" target="_blank" data-pat="https://classyschema.org/Visualisation?url={URL_E}"><span class="tool-name">Classy Schema Viewer</span><span class="tool-tag">URL 자동</span></a>
 
-      <div class="group-title">⚡ 속도</div>
+      <div class="group-title">속도</div>
       <a class="tool-link auto" target="_blank" data-pat="https://pagespeed.web.dev/analysis?url={URL_E}&form_factor=mobile"><span class="tool-name">PageSpeed Mobile</span><span class="tool-tag">URL 자동</span></a>
       <a class="tool-link auto" target="_blank" data-pat="https://pagespeed.web.dev/analysis?url={URL_E}&form_factor=desktop"><span class="tool-name">PageSpeed Desktop</span><span class="tool-tag">URL 자동</span></a>
 
-      <div class="group-title">🔍 SEO 등록·관리</div>
+      <div class="group-title">SEO 등록·관리</div>
       <a class="tool-link" target="_blank" data-pat="https://search.google.com/search-console"><span class="tool-name">Google Search Console</span><span class="tool-tag">로그인</span></a>
       <a class="tool-link" target="_blank" data-pat="https://searchadvisor.naver.com/"><span class="tool-name">Naver Search Advisor</span><span class="tool-tag">로그인</span></a>
       <a class="tool-link" target="_blank" data-pat="https://www.bing.com/webmasters"><span class="tool-name">Bing Webmaster</span><span class="tool-tag">로그인</span></a>
 
-      <div class="group-title">🤖 AEO/GEO</div>
+      <div class="group-title">AEO/GEO</div>
       <a class="tool-link auto" target="_blank" data-pat="https://www.airanklab.com/?url={URL_E}"><span class="tool-name">AI Rank Lab</span><span class="tool-tag">freemium</span></a>
       <a class="tool-link auto" target="_blank" data-pat="https://geoptie.com/free-geo-audit?url={URL_E}"><span class="tool-name">Geoptie GEO 감사</span><span class="tool-tag">무료</span></a>
       <a class="tool-link" target="_blank" data-pat="https://otterly.ai/geo-tools"><span class="tool-name">OtterlyAI</span><span class="tool-tag">freemium</span></a>
 
-      <div class="group-title">📊 도메인 점수·백링크</div>
+      <div class="group-title">도메인 점수·백링크</div>
       <a class="tool-link auto" target="_blank" data-pat="https://app.neilpatel.com/en/traffic_analyzer/overview?domain={ORIGIN}"><span class="tool-name">Ubersuggest</span><span class="tool-tag">freemium</span></a>
       <a class="tool-link auto" target="_blank" data-pat="https://moz.com/domain-analysis?site={ORIGIN}"><span class="tool-name">Moz Link Explorer</span><span class="tool-tag">freemium</span></a>
       <a class="tool-link" target="_blank" data-pat="https://ahrefs.com/webmaster-tools"><span class="tool-name">Ahrefs Webmaster</span><span class="tool-tag">본인 사이트</span></a>
       <a class="tool-link auto" target="_blank" data-pat="https://www.similarweb.com/website/{HOST}/"><span class="tool-name">SimilarWeb</span><span class="tool-tag">URL 자동</span></a>
 
-      <div class="group-title">🏪 로컬·비즈니스</div>
+      <div class="group-title">로컬·비즈니스</div>
       <a class="tool-link" target="_blank" data-pat="https://www.google.com/business/"><span class="tool-name">Google Business Profile</span><span class="tool-tag">로그인</span></a>
       <a class="tool-link" target="_blank" data-pat="https://smartplace.naver.com/"><span class="tool-name">Naver 스마트플레이스</span><span class="tool-tag">로그인</span></a>
 
-      <div class="group-title">📈 트렌드</div>
+      <div class="group-title">트렌드</div>
       <a class="tool-link" target="_blank" data-pat="https://trends.google.com/trends/explore?q={KEYWORD}"><span class="tool-name">Google Trends</span><span class="tool-tag">키워드 자동</span></a>
       <a class="tool-link" target="_blank" data-pat="https://datalab.naver.com/keyword/trendSearch.naver"><span class="tool-name">Naver DataLab</span><span class="tool-tag">키워드</span></a>
 
-      <div class="group-title">👁️ 행동 분석</div>
+      <div class="group-title">행동 분석</div>
       <a class="tool-link" target="_blank" data-pat="https://clarity.microsoft.com/"><span class="tool-name">Microsoft Clarity</span><span class="tool-tag">설치 필요</span></a>
       <a class="tool-link" target="_blank" data-pat="https://analytics.google.com/"><span class="tool-name">Google Analytics</span><span class="tool-tag">설치 필요</span></a>
 
-      <div class="group-title">♿ 접근성</div>
+      <div class="group-title">접근성</div>
       <a class="tool-link auto" target="_blank" data-pat="https://wave.webaim.org/report#/{URL_R}"><span class="tool-name">WAVE Accessibility</span><span class="tool-tag">URL 자동</span></a>
       <a class="tool-link" target="_blank" data-pat="https://www.screamingfrog.co.uk/seo-spider/"><span class="tool-name">Screaming Frog</span><span class="tool-tag">데스크탑</span></a>
 
-      <div class="group-title">📝 AEO 파일</div>
+      <div class="group-title">AEO 파일</div>
       <a class="tool-link auto" target="_blank" data-pat="{ORIGIN}/robots.txt"><span class="tool-name">robots.txt 직접 보기</span><span class="tool-tag">URL 자동</span></a>
       <a class="tool-link auto" target="_blank" data-pat="{ORIGIN}/llms.txt"><span class="tool-name">llms.txt 직접 보기</span><span class="tool-tag">URL 자동</span></a>
       <a class="tool-link auto" target="_blank" data-pat="{ORIGIN}/sitemap.xml"><span class="tool-name">sitemap.xml 직접 보기</span><span class="tool-tag">URL 자동</span></a>
 
-      <div class="group-title">📚 아카이브</div>
+      <div class="group-title">아카이브</div>
       <a class="tool-link auto" target="_blank" data-pat="https://web.archive.org/web/*/{URL_R}"><span class="tool-name">Wayback Machine</span><span class="tool-tag">URL 자동</span></a>
     </div>
   </div>

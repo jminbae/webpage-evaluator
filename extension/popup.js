@@ -52,7 +52,7 @@ async function refreshCurrentTab({ autoAnalyze = false } = {}) {
   urlEl.title = currentUrl;
   document.body.classList.remove('loading');
   updateToolLinks();
-  if (autoAnalyze) runAnalysis();
+  if (autoAnalyze) runAll();
   return true;
 }
 
@@ -88,21 +88,14 @@ function setupTabs() {
 function setupActions() {
   document.getElementById('btn-rerun').addEventListener('click', async () => {
     const ok = await refreshCurrentTab({ autoAnalyze: false });
-    if (ok) runAnalysis();
+    if (ok) runAll();
   });
-  document.getElementById('btn-options').addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
-  });
-  document.getElementById('btn-site').addEventListener('click', async () => {
-    const ok = await refreshCurrentTab({ autoAnalyze: false });
-    if (!ok) return;
-    // Switch to site tab
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
-    document.querySelector('.tab[data-tab="site"]').classList.add('active');
-    document.querySelector('[data-panel="site"]').classList.add('active');
-    runSiteAnalysis();
-  });
+}
+
+// Run page + site analyses sequentially. Page is fast; site streams progress.
+async function runAll() {
+  await runAnalysis();
+  await runSiteAnalysis();
 }
 
 // ========== Tool links auto-fill ==========
@@ -213,7 +206,7 @@ async function runAnalysis() {
   resetCards();
   document.body.classList.add('loading');
   document.body.classList.add('analyzing');
-  setStatus('🔍 페이지 분석 중...', 'progress');
+  setStatus('페이지 분석 중...', 'progress');
 
   const origin = new URL(currentUrl).origin;
   const host = new URL(currentUrl).host;
@@ -474,7 +467,7 @@ async function runAnalysis() {
 
   document.body.classList.remove('loading');
   document.body.classList.remove('analyzing');
-  setStatus('✓ 페이지 분석 완료', 'done');
+  setStatus('페이지 분석 완료', 'done');
   lastAnalysis = { domData, bgResults, scores, weights };
 }
 
@@ -708,7 +701,7 @@ async function runSiteAnalysis() {
   document.getElementById('site-empty').style.display = 'none';
   document.getElementById('site-results').style.display = '';
   document.body.classList.add('analyzing');
-  setStatus('🏠 sitemap 수집 중...', 'progress');
+  setStatus('사이트맵 수집 중...', 'progress');
 
   // Reset cards
   ['ds-pages','ds-author','ds-org','ds-schema-diversity','ds-faq-coverage','ds-freshness','ds-knowledge-graph'].forEach(id => {
@@ -727,7 +720,7 @@ async function runSiteAnalysis() {
   });
 
   if (!sel?.ok) {
-    setStatus('❌ 사이트 분석 실패: ' + (sel?.error || 'unknown'), 'error');
+    setStatus('사이트 분석 실패: ' + (sel?.error || '응답 없음'), 'error');
     document.body.classList.remove('analyzing');
     return;
   }
@@ -741,7 +734,7 @@ async function runSiteAnalysis() {
       ? `/${g.prefix === '__root__' ? '' : g.prefix} (전수 ${g.total})`
       : `/${g.prefix} (샘플 ${g.sampled}/${g.total})`
   ).join(', ');
-  setStatus(`🏠 ${total}개 페이지 선정 — ${reportTxt}${(sel.groupReport||[]).length > 5 ? '…' : ''}`, 'progress');
+  setStatus(`${total}개 페이지 선정 · ${reportTxt}${(sel.groupReport||[]).length > 5 ? '…' : ''}`, 'progress');
 
   // Render placeholder list
   const listEl = document.getElementById('site-pages-list');
@@ -775,12 +768,12 @@ async function runSiteAnalysis() {
     parsed.push(entry);
     updateSitePageItem(itemMap[url], entry);
     done++;
-    setStatus(`🏠 분석 중 ${done}/${total} 페이지 완료`, 'progress');
+    setStatus(`사이트 분석 중 ${done}/${total} 페이지 완료`, 'progress');
   });
 
   // Step 3: aggregate
   renderSiteAggregate(parsed, { ...sel, total: parsed.length });
-  setStatus(`✓ 사이트 분석 완료 — ${parsed.filter(p => p.ok).length}/${total} 페이지 성공`, 'done');
+  setStatus(`사이트 분석 완료 — ${parsed.filter(p => p.ok).length}/${total} 페이지 성공`, 'done');
   document.body.classList.remove('analyzing');
 }
 
@@ -922,12 +915,33 @@ function renderSitePagesList(parsed) {
 function renderSiteAggregate(parsed, result) {
   const okPages = parsed.filter(p => p.data);
   const total = okPages.length;
+  const sitemapTotal = result.sitemapUrlCount || 0;
+  const aboutCount = result.aboutCount || 0;
+  const groupReport = result.groupReport || [];
 
-  // Pages count
+  // Top summary card
+  const summaryEl = document.getElementById('site-summary');
+  if (summaryEl) {
+    const allGroups = groupReport.filter(g => g.mode === 'all').length;
+    const sampleGroups = groupReport.filter(g => g.mode === 'sample').length;
+    summaryEl.innerHTML = `
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px;">
+        총 <span style="color:var(--accent);">${total}</span>개 페이지 분석 완료
+        <span style="color:var(--text-muted);font-size:12px;font-weight:400;">(${parsed.length}개 시도 중 성공)</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.6;">
+        사이트맵: ${sitemapTotal > 0 ? `${sitemapTotal}개 URL 발견` : '없음 — 추정 경로 사용'}<br>
+        About 계열 전수 분석: <strong style="color:var(--text);">${aboutCount}</strong>개<br>
+        URL 그룹: 전수 ${allGroups}개 · 샘플링 ${sampleGroups}개
+      </div>
+    `;
+  }
+
+  // Pages count card
   const pageCard = document.getElementById('ds-pages');
   pageCard.querySelector('.status').textContent = total > 0 ? '✓' : '✗';
   pageCard.querySelector('.detail').innerHTML =
-    `${total}/${parsed.length}개 성공 · sitemap에서 ${result.sitemapUrlCount}개 URL 발견`;
+    `<strong style="color:var(--text);font-size:14px;">${total}</strong>개 페이지 성공 / ${parsed.length}개 시도 · 사이트맵 전체 ${sitemapTotal}개`;
   setSiteCardLevel('ds-pages', total >= 5 ? 'good' : (total >= 2 ? 'warn' : 'bad'));
 
   if (total === 0) return;

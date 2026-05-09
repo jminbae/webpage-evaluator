@@ -45,30 +45,42 @@ const AI_BOTS = [
 ];
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Safe wrapper: ensures sendResponse is ALWAYS called, even if handler throws.
+  // Without this, an unhandled rejection leaves popup waiting forever (sees "unknown").
+  const safe = (promise) => {
+    Promise.resolve(promise)
+      .then(sendResponse)
+      .catch((err) => {
+        const detail = err?.stack || err?.message || String(err);
+        console.error('[bg] handler failed for', msg.action, '\n', detail);
+        sendResponse({ ok: false, error: err?.message || String(err) || 'handler threw' });
+      });
+  };
+
   if (msg.action === 'fetch-extras') {
-    handleFetchExtras(msg.url).then(sendResponse);
-    return true; // async
+    safe(handleFetchExtras(msg.url));
+    return true;
   }
   if (msg.action === 'psi') {
-    handlePsi(msg.url, msg.key, msg.strategy).then(sendResponse);
+    safe(handlePsi(msg.url, msg.key, msg.strategy));
     return true;
   }
   if (msg.action === 'google-suggest') {
-    handleGoogleSuggest(msg.q).then(sendResponse);
+    safe(handleGoogleSuggest(msg.q));
     return true;
   }
   if (msg.action === 'naver-suggest') {
-    handleNaverSuggest(msg.q).then(sendResponse);
+    safe(handleNaverSuggest(msg.q));
     return true;
   }
   if (msg.action === 'site-select-urls') {
-    handleSiteSelectUrls(msg.origin).then(sendResponse);
+    safe(handleSiteSelectUrls(msg.origin));
     return true;
   }
   if (msg.action === 'fetch-url') {
-    fetchText(msg.url, 10000).then(r => sendResponse({
+    safe(fetchText(msg.url, 10000).then(r => ({
       url: msg.url, ok: r.ok, html: r.text || '', error: r.error
-    }));
+    })));
     return true;
   }
 });
