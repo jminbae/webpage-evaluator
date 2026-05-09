@@ -107,9 +107,14 @@ function setScore(id, val) {
   if (!el) return;
   el.textContent = val === '—' ? '—' : val;
   el.classList.remove('good','warn','bad');
+  // Also apply level class to parent .score-card for border/background highlighting
+  const parent = el.closest('.score-card');
+  if (parent) parent.classList.remove('good','warn','bad');
   if (val !== '—') {
     const n = typeof val === 'string' ? parseInt(val) : val;
-    el.classList.add(n >= 80 ? 'good' : (n >= 50 ? 'warn' : 'bad'));
+    const lvl = n >= 80 ? 'good' : (n >= 50 ? 'warn' : 'bad');
+    el.classList.add(lvl);
+    if (parent) parent.classList.add(lvl);
   }
 }
 
